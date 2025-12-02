@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   BadgeCheck,
@@ -7,13 +7,9 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
-} from "lucide-react"
+} from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,38 +18,46 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export function NavUser({
   user,
-  logout
+  logout,
 }: {
   user: {
-    name: string
-    email: string
-    image: string
-  }
-  logout: () => void
+    name: string;
+    email: string;
+    image?: string;
+  };
+  logout: () => void;
 }) {
-  const { isMobile } = useSidebar()
+  const router = useRouter();
+  const { isMobile } = useSidebar();
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
+    <SidebarMenu className="border rounded-2xl p-3">
+      <SidebarMenuItem className="hover:bg-sidebar">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger
+            asChild
+            className="hover:bg-transparent focus-visible:ring-transparent"
+          >
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:h-8 md:p-0"
+              className=" data-[state=open]:text-sidebar-accent-foreground md:h-8 md:p-0"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.image} alt={user.name} />
+                <AvatarImage
+                  src={user.image || "/image/shadcn.jpg"}
+                  alt={user.name}
+                />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -104,7 +108,12 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+                router.push("/sign-in");
+              }}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
@@ -112,5 +121,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
