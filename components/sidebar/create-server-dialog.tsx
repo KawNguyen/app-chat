@@ -17,9 +17,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Upload } from "lucide-react";
+import { trpc } from "@/lib/trpc/react";
 
 export function CreateServerDialog() {
   const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const createServer = trpc.server.createServer.useMutation({
+    onSuccess: () => {
+      setOpen(false);
+      // Reset form
+      setIconPreview(null);
+      utils.server.listServerJoined.invalidate();
+    },
+  });
 
   function handleIconChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -29,16 +41,37 @@ export function CreateServerDialog() {
     setIconPreview(url);
   }
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+
+    await createServer.mutateAsync({
+      name,
+      icon: iconPreview || undefined,
+      description: description || undefined,
+    });
+  }
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="default" className="font-medium">
-          <Plus className="size-5"/>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        asChild
+        className="rounded-full hover:bg-accent/50 flex items-center justify-center"
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full hover:bg-accent/50 flex items-center justify-center"
+        >
+          <Plus className="size-5" />
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[450px]">
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create a Server</DialogTitle>
             <DialogDescription>
@@ -76,6 +109,8 @@ export function CreateServerDialog() {
               name="name"
               placeholder="My Awesome Server"
               required
+              minLength={3}
+              maxLength={100}
             />
           </div>
 
@@ -86,14 +121,19 @@ export function CreateServerDialog() {
               id="server-description"
               name="description"
               placeholder="Optional description..."
+              maxLength={255}
             />
           </div>
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" type="button">
+                Cancel
+              </Button>
             </DialogClose>
-            <Button type="submit">Create</Button>
+            <Button type="submit" disabled={createServer.isPending}>
+              {createServer.isPending ? "Creating..." : "Create"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,19 +1,33 @@
+import ChatContainer from "@/components/chat-container";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="animated-gradient-bg min-h-screen">
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "350px",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar />
-        <main className="w-full">{children}</main>
-      </SidebarProvider>
+    <div className="min-h-screen">
+      <ResizablePanelGroup direction="horizontal" className="w-max">
+        <ResizablePanel
+          defaultSize={18}
+          minSize={14}
+          maxSize={18}
+          className="w-full"
+        >
+          <AppSidebar />
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel
+          defaultSize={82}
+          minSize={82}
+          maxSize={86}
+          className="w-full"
+        >
+          <ChatContainer />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
