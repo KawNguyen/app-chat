@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../trpc";
 import prisma from "@/lib/prisma";
 import { TRPCError } from "@trpc/server";
+import { UserStatus } from "@/types";
 
 /**
  * User router - handles user-related operations
@@ -79,6 +80,31 @@ export const userRouter = router({
         select: {
           id: true,
           username: true,
+        },
+      });
+
+      return updatedUser;
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        status: z.enum([
+          UserStatus.ONLINE,
+          UserStatus.OFFLINE,
+          UserStatus.IDLE,
+          UserStatus.DND,
+          UserStatus.INVISIBLE,
+        ]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const updatedUser = await prisma.user.update({
+        where: { id: ctx.user.id },
+        data: { status: input.status },
+        select: {
+          id: true,
+          status: true,
         },
       });
 

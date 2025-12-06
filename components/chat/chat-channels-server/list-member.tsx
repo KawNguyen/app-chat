@@ -1,34 +1,14 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import {
-  serverMembers,
-  getAvatarGradient,
-  type ServerMember,
-  type UserStatus,
-} from "@/constants";
+import { serverMembers, type ServerMember } from "@/constants";
+import { type UserStatus } from "@/types";
+// import { StatusIndicator } from "../sidebar/user-nav";
+import { UserAvatar } from "../../user-avatar";
 
-const StatusIndicator = ({ status }: { status: UserStatus }) => {
-  const statusConfig = {
-    ONLINE: "bg-green-500",
-    IDLE: "bg-yellow-500",
-    DND: "bg-red-500",
-    INVISIBLE: "bg-gray-500",
-    OFFLINE: "bg-gray-500",
-  };
-
-  return (
-    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[3px] border-background bg-background">
-      <div className={cn("w-full h-full rounded-full", statusConfig[status])} />
-    </div>
-  );
-};
-
-const MemberItem = ({ member }: { member: ServerMember }) => {
+function MemberItem({ member }: { member: ServerMember }) {
   const displayName = member.nickname || member.user.name;
-  const avatarGradient = getAvatarGradient(member.userId);
   const highestRole = member.roles.sort((a, b) => b.position - a.position)[0];
 
   return (
@@ -38,7 +18,7 @@ const MemberItem = ({ member }: { member: ServerMember }) => {
         "hover:bg-accent/30 transition-colors"
       )}
     >
-      <div className="relative">
+      {/* <div className="relative">
         <Avatar className="h-8 w-8">
           <AvatarImage src={member.user.image} alt={displayName} />
           <AvatarFallback
@@ -47,8 +27,10 @@ const MemberItem = ({ member }: { member: ServerMember }) => {
             {displayName.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <StatusIndicator status={member.user.status} />
-      </div>
+        <StatusIndicator status={member.user.status as UserStatus} />
+      </div> */}
+
+      <UserAvatar user={member.user} size="md" sizeStatus="4" showStatus />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
@@ -67,9 +49,9 @@ const MemberItem = ({ member }: { member: ServerMember }) => {
       </div>
     </div>
   );
-};
+}
 
-const ListMember = () => {
+export function ListMember() {
   // Helper: Check if member is active (online, idle, dnd)
   const isActive = (status: UserStatus) =>
     status === "ONLINE" || status === "IDLE" || status === "DND";
@@ -94,7 +76,7 @@ const ListMember = () => {
         };
       }
 
-      if (isActive(member.user.status)) {
+      if (isActive(member.user.status as UserStatus)) {
         acc[roleKey].active.push(member);
       } else {
         acc[roleKey].offline.push(member);
@@ -168,6 +150,4 @@ const ListMember = () => {
       </ScrollArea>
     </div>
   );
-};
-
-export default ListMember;
+}

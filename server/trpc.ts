@@ -4,7 +4,7 @@ import superjson from "superjson";
 import { headers } from "next/headers";
 
 /**
- * Create context for tRPC
+ * Create context for tRPC (HTTP requests - Next.js API routes)
  */
 export async function createContext() {
   const headersList = await headers();
@@ -24,6 +24,19 @@ export async function createContext() {
       user: null,
     };
   }
+}
+
+/**
+ * Create context for WebSocket connections
+ * WebSocket doesn't have access to Next.js headers()
+ */
+export async function createWSContext() {
+  // WebSocket connections are public for now
+  // Authentication can be handled via token in connection params if needed
+  return {
+    session: null,
+    user: null,
+  };
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;

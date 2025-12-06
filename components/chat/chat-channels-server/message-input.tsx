@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, KeyboardEvent } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../../ui/button";
 import { Smile, Plus, Gift, Sticker } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -9,8 +9,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
-import { Textarea } from "./ui/textarea";
+} from "../../ui/tooltip";
+import { Textarea } from "../../ui/textarea";
 
 interface MessageInputProps {
   channelName?: string;
@@ -18,11 +18,11 @@ interface MessageInputProps {
   onSendMessage?: (content: string) => void;
 }
 
-const MessageInput = ({
+export function MessageInput({
   channelName = "nhắn-tin",
   placeholder,
   onSendMessage,
-}: MessageInputProps) => {
+}: MessageInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -144,6 +144,4 @@ const MessageInput = ({
       </div>
     </div>
   );
-};
-
-export default MessageInput;
+}

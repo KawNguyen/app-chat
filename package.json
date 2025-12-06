@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:ws": "bun run websocket-server.ts",
+    "dev:all": "concurrently \"bun run dev\" \"bun run dev:ws\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -43,6 +45,7 @@
     "sonner": "^2.0.7",
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.4.0",
+    "ws": "^8.18.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
@@ -51,7 +54,9 @@
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "baseline-browser-mapping": "^2.8.32",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.5",
     "prisma": "^7.0.1",

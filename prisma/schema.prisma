@@ -173,6 +173,7 @@ model Channel {
     category    Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
     messages    Message[]
     permissions ChannelPermission[]
+    members     ChannelMember[] // Members with access to private channels
 
     @@map("channels")
 }
@@ -196,10 +197,11 @@ model Member {
     isMuted    Boolean  @default(false)
     isDeafened Boolean  @default(false)
 
-    user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    server   Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
-    roles    MemberRole[]
-    messages Message[]
+    user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    server        Server          @relation(fields: [serverId], references: [id], onDelete: Cascade)
+    roles         MemberRole[]
+    messages      Message[]
+    channelAccess ChannelMember[] // Access to private channels
 
     @@unique([userId, serverId])
     @@map("members")
@@ -249,6 +251,21 @@ model ChannelPermission {
 
     @@unique([channelId, roleId])
     @@map("channel_permissions")
+}
+
+// Member-specific access to private channels (override role permissions)
+model ChannelMember {
+    id          String   @id @default(cuid())
+    channelId   String
+    memberId    String
+    permissions BigInt   @default(0) // Override permissions cho member này
+    createdAt   DateTime @default(now())
+
+    channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+    member  Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+    @@unique([channelId, memberId])
+    @@map("channel_members")
 }
 
 // ==================== MESSAGE MODELS ====================
