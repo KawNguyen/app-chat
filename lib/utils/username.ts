@@ -5,7 +5,7 @@ import prisma from "../prisma";
  */
 export async function generateUniqueUsername(
   email: string,
-  name?: string
+  name?: string,
 ): Promise<string> {
   // Get part before @ of email or use name
   let baseUsername = name
@@ -53,7 +53,7 @@ export async function generateUniqueUsername(
 export async function ensureUserHasUsername(
   userId: string,
   email: string,
-  name?: string
+  name?: string,
 ): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },

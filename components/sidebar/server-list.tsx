@@ -5,6 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { CreateServerDialog } from "./create-server-dialog";
 import { useEffect, useRef, useState } from "react";
 import { Server } from "@/types";
+import { useRouter } from "next/navigation";
+import { trpc } from "@/lib/trpc/react";
+import { getLastChannelForServer } from "@/lib/utils/server-cache";
 
 interface ServerListProps {
   servers: Server[];
@@ -18,8 +21,39 @@ export function ServerList({
   onServerSelect,
 }: ServerListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-
   const [indicatorPos, setIndicatorPos] = useState({ top: 0, height: 0 });
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
+  const handleServerClick = async (server: Server) => {
+    onServerSelect(server.id);
+
+    // Lấy thông tin server để tìm channel text đầu tiên
+    const serverData = await utils.server.getServerById.fetch({
+      serverId: server.id,
+    });
+
+    // Tìm channel text đầu tiên
+    let firstTextChannel: string | null = null;
+    for (const category of serverData?.categories || []) {
+      const textChannel = category.channels?.find((ch) => ch.type === "TEXT");
+      if (textChannel) {
+        firstTextChannel = textChannel.id;
+        break;
+      }
+    }
+
+    // Ưu tiên channel đã cache, nếu không có thì dùng channel text đầu tiên
+    const cachedChannelId = getLastChannelForServer(server.id);
+    const targetChannelId = cachedChannelId || firstTextChannel;
+
+    if (targetChannelId) {
+      router.push(`/channels/${server.id}/${targetChannelId}`);
+    } else {
+      // Fallback nếu không có channel nào
+      router.push(`/channels/${server.id}`);
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -27,7 +61,7 @@ export function ServerList({
     // Khi activeServerId là null, tìm nút Zap
     const targetId = activeServerId === null ? "zap" : activeServerId;
     const activeEl = containerRef.current.querySelector(
-      `button[data-id="${targetId}"]`
+      `button[data-id="${targetId}"]`,
     ) as HTMLElement | null;
 
     if (activeEl) {
@@ -61,7 +95,10 @@ export function ServerList({
         {/* ZAP - Direct Messages / Home */}
         <button
           data-id="zap"
-          onClick={() => onServerSelect(null)}
+          onClick={() => {
+            onServerSelect(null);
+            router.push("/channels/me");
+          }}
           className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all bg-muted
             ${
               activeServerId === null
@@ -82,7 +119,7 @@ export function ServerList({
             <button
               key={sv.id}
               data-id={sv.id}
-              onClick={() => onServerSelect(sv.id)}
+              onClick={() => handleServerClick(sv as Server)}
               className={`w-12 h-12 rounded-lg flex items-center justify-center transition-opacity
               ${
                 activeServerId === sv.id
@@ -98,7 +135,7 @@ export function ServerList({
                 </AvatarFallback>
               </Avatar>
             </button>
-          )
+          ),
         )}
 
         {/* CREATE SERVER */}

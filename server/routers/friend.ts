@@ -16,7 +16,7 @@ export const friendRouter = router({
         friend: {
           select: {
             id: true,
-            username: true,
+            userName: true,
             displayName: true,
             image: true,
             status: true,
@@ -42,7 +42,7 @@ export const friendRouter = router({
         sender: {
           select: {
             id: true,
-            username: true,
+            userName: true,
             displayName: true,
             image: true,
           },
@@ -62,13 +62,13 @@ export const friendRouter = router({
   sendFriendRequest: protectedProcedure
     .input(
       z.object({
-        username: z.string(),
-      })
+        userName: z.string(),
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Find user by username
       const receiver = await prisma.user.findUnique({
-        where: { username: input.username },
+        where: { userName: input.userName },
       });
 
       if (!receiver) {
@@ -138,7 +138,7 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
@@ -152,25 +152,68 @@ export const friendRouter = router({
         });
       }
 
-      // Create friendship (both directions)
-      await prisma.$transaction([
-        prisma.friend.create({
-          data: {
-            userId: ctx.user.id,
-            friendId: request.senderId,
-          },
-        }),
-        prisma.friend.create({
-          data: {
-            userId: request.senderId,
-            friendId: ctx.user.id,
-          },
-        }),
-        prisma.friendRequest.update({
+      // Check if conversation already exists
+      const existingConversation = await prisma.conversation.findFirst({
+        where: {
+          AND: [
+            {
+              participants: {
+                some: { userId: ctx.user.id },
+              },
+            },
+            {
+              participants: {
+                some: { userId: request.senderId },
+              },
+            },
+            {
+              participants: {
+                none: {
+                  userId: {
+                    notIn: [ctx.user.id, request.senderId],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      // Create friendship (both directions) and conversation
+      await prisma.$transaction(async (tx) => {
+        // Create friendships
+        await tx.friend.createMany({
+          data: [
+            {
+              userId: ctx.user.id,
+              friendId: request.senderId,
+            },
+            {
+              userId: request.senderId,
+              friendId: ctx.user.id,
+            },
+          ],
+        });
+
+        // Update request status
+        await tx.friendRequest.update({
           where: { id: input.requestId },
           data: { status: "ACCEPTED" },
-        }),
-      ]);
+        });
+
+        // Create conversation if it doesn't exist
+        if (!existingConversation) {
+          const conversation = await tx.conversation.create({
+            data: {
+              participants: {
+                create: [{ userId: ctx.user.id }, { userId: request.senderId }],
+              },
+            },
+          });
+
+          console.log("✅ Created conversation:", conversation.id);
+        }
+      });
 
       return { success: true };
     }),
@@ -182,7 +225,7 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
@@ -211,7 +254,7 @@ export const friendRouter = router({
     .input(
       z.object({
         friendId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       await prisma.friend.deleteMany({

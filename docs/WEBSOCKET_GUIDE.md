@@ -69,7 +69,7 @@ export function ChatMessages({ channelId }: { channelId: string }) {
         // Update UI or invalidate queries
         utils.message.invalidate();
       },
-    }
+    },
   );
 
   return <div>Messages here...</div>;

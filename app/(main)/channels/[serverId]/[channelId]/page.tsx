@@ -1,15 +1,16 @@
-import ChatContainer from "@/components/chat/chat-container";
+import ChatContainer from "@/components/chat/channel-chat-container";
 import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
 
 const Page = async ({
   params,
 }: {
   params: Promise<{ serverId: string; channelId: string }>;
 }) => {
-  const { channelId } = await params;
+  const { serverId, channelId } = await params;
 
   const channel = await prisma.channel.findUnique({
-    where: { id: channelId },
+    where: { id: channelId, serverId: serverId },
     select: {
       id: true,
       name: true,
@@ -17,10 +18,16 @@ const Page = async ({
   });
 
   if (!channel) {
-    return <div>Channel not found</div>;
+    notFound();
   }
 
-  return <ChatContainer channelId={channel.id} channelName={channel.name} />;
+  return (
+    <ChatContainer
+      channelId={channel.id}
+      channelName={channel.name}
+      serverId={serverId}
+    />
+  );
 };
 
 export default Page;

@@ -54,7 +54,7 @@ export interface User {
   email: string;
   emailVerified: boolean;
   name: string | null;
-  username: string | null;
+  userName: string | null;
   displayName: string | null;
   image: string | null;
   banner: string | null;
@@ -182,6 +182,14 @@ export interface ChannelPermission {
   deny: bigint;
 }
 
+export interface ChannelMember {
+  id: string;
+  channelId: string;
+  memberId: string;
+  permissions: bigint;
+  createdAt: Date;
+}
+
 // ==================== MESSAGE TYPES ====================
 
 export interface Message {
@@ -193,9 +201,6 @@ export interface Message {
   channelId: string;
   memberId: string;
   userId: string;
-  member: Member | null;
-  user: User;
-  attachments?: Attachment[];
   replyToId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -207,7 +212,8 @@ export interface Attachment {
   url: string;
   size: number;
   type: string;
-  messageId: string;
+  messageId: string | null;
+  directMessageId: string | null;
   createdAt: Date;
 }
 
@@ -244,6 +250,7 @@ export interface Conversation {
   isGroup: boolean;
   name: string | null;
   icon: string | null;
+  isHidden: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -264,16 +271,23 @@ export interface DirectMessage {
   isEdited: boolean;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface DirectMessageAttachment {
-  id: string;
-  name: string;
-  url: string;
-  size: number;
-  type: string;
-  directMessageId: string;
-  createdAt: Date;
+  // sender?: {
+  //   id: string;
+  //   userName: string | null;
+  //   displayName: string | null;
+  //   image: string | null;
+  //   status: UserStatus;
+  // };
+  // attachments?: {
+  //   id: string;
+  //   name: string;
+  //   url: string;
+  //   size: number;
+  //   type: string;
+  //   messageId: string | null;
+  //   directMessageId: string | null;
+  //   createdAt: Date;
+  // }[];
 }
 
 // ==================== FRIEND & BLOCK TYPES ====================

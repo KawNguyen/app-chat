@@ -7,6 +7,7 @@ import { friendRouter } from "./friend";
 import { conversationRouter } from "./conversation";
 import { messageRouter } from "./message";
 import { permissionRouter } from "./permission";
+import { memberRouter } from "./member";
 
 export const appRouter = router({
   user: userRouter,
@@ -17,6 +18,7 @@ export const appRouter = router({
   conversation: conversationRouter,
   message: messageRouter,
   permission: permissionRouter,
+  member: memberRouter,
 });
 
 export type AppRouter = typeof appRouter;

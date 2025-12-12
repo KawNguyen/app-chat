@@ -13,7 +13,7 @@ export const messageRouter = router({
         channelId: z.string(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const messages = await prisma.message.findMany({
@@ -26,19 +26,9 @@ export const messageRouter = router({
           createdAt: "desc",
         },
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              displayName: true,
-              image: true,
-            },
-          },
           member: {
-            select: {
-              id: true,
-              nickname: true,
+            include: {
+              user: true,
             },
           },
           attachments: true,
@@ -63,7 +53,7 @@ export const messageRouter = router({
       z.object({
         channelId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Find member for this user in the server
@@ -95,15 +85,6 @@ export const messageRouter = router({
           memberId: member.id,
         },
         include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              displayName: true,
-              image: true,
-            },
-          },
           member: {
             select: {
               id: true,
@@ -123,7 +104,7 @@ export const messageRouter = router({
         createdAt: message.createdAt,
       });
 
-      // Notify WebSocket server (cross-process communication)
+      // // Notify WebSocket server (cross-process communication)
       await notifyNewMessage({
         id: message.id,
         content: message.content,
@@ -140,7 +121,7 @@ export const messageRouter = router({
     .input(
       z.object({
         messageId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if user owns the message
@@ -169,7 +150,7 @@ export const messageRouter = router({
       z.object({
         messageId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if user owns the message
@@ -192,12 +173,10 @@ export const messageRouter = router({
           isEdited: true,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
-              name: true,
-              username: true,
-              image: true,
+              nickname: true,
             },
           },
         },
@@ -211,7 +190,7 @@ export const messageRouter = router({
     .input(
       z.object({
         channelId: z.string(),
-      })
+      }),
     )
     .subscription(({ input }) => {
       return observable<typeof input & { messageId: string }>((emit) => {

@@ -1,23 +1,37 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { NavUser } from "@/components/sidebar/nav-user";
 import { signOut } from "@/lib/auth-client";
+import { trpc } from "@/lib/trpc/react";
+import { Server, User, UserStatus } from "@/types";
+import FriendList from "../direct-chat/components/friend-list";
 import { ServerList } from "./server-list";
 import { ChannelList } from "./channel-list";
-import { FriendList } from "./friend-list";
-import { trpc } from "@/lib/trpc/react";
-import { Server, UserStatus } from "@/types";
 
-export function AppSidebar() {
-  const { data: user } = trpc.user.me.useQuery();
-  const { data: servers = [] } = trpc.server.listServerJoined.useQuery() as {
+function SidebarContent() {
+  const params = useParams();
+  const serverIdFromUrl = params?.serverId as string | undefined;
+
+  const { data: user } = trpc.user.me.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  }) as { data: User };
+
+  const { data: servers = [] } = trpc.server.listServerJoined.useQuery(
+    undefined,
+    {
+      staleTime: 2 * 60 * 1000, // 2 minutes
+    }
+  ) as {
     data: Server[];
   };
 
-  const [activeServer, setActiveServer] = useState<Server | null>(
-    servers[0] || null
-  );
+  // Tính toán activeServer từ URL params
+  const activeServer = serverIdFromUrl
+    ? servers.find((s) => s.id === serverIdFromUrl) || null
+    : null;
+
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<string | null>(
     null
@@ -25,16 +39,10 @@ export function AppSidebar() {
 
   const handleServerSelect = (serverId: string | null) => {
     if (serverId === null) {
-      // Zap mode - Direct Messages
-      setActiveServer(null);
       setActiveChannel(null);
     } else {
-      const server = servers.find((s) => s.id === serverId);
-      if (server) {
-        setActiveServer(server);
-        setActiveChannel(null);
-        setActiveConversation(null);
-      }
+      setActiveChannel(null);
+      setActiveConversation(null);
     }
   };
 
@@ -71,18 +79,21 @@ export function AppSidebar() {
       </div>
 
       <div className="px-3 pb-3">
-        {user && (
-          <NavUser
-            user={{
-              name: user.displayName || user.username || user.email,
-              email: user.email,
-              image: user.image || undefined,
-              status: user.status as unknown as UserStatus,
-            }}
-            logout={() => signOut()}
-          />
-        )}
+        <NavUser
+          user={{
+            userName: user?.userName || "",
+            displayName: user?.displayName || "User",
+            email: user?.email || "",
+            image: user?.image || undefined,
+            status: user?.status as unknown as UserStatus,
+          }}
+          logout={() => signOut()}
+        />
       </div>
     </aside>
   );
+}
+
+export function AppSidebar() {
+  return <SidebarContent />;
 }

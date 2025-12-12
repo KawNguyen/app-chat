@@ -48,3 +48,47 @@ export async function notifyMessageUpdate(message: {
 export async function notifyMessageDelete(messageId: string) {
   return notifyWsServer("message:delete", messageId);
 }
+
+export async function notifyNewDirectMessage(message: {
+  id: string;
+  content: string;
+  conversationId: string;
+  senderId: string;
+  createdAt: Date;
+}) {
+  return notifyWsServer("conversation:message:new", message);
+}
+
+export async function notifyDirectMessageUpdate(message: {
+  id: string;
+  content: string;
+  conversationId: string;
+  userId: string;
+  createdAt: Date;
+}) {
+  return notifyWsServer("conversation:message:update", message);
+}
+
+export async function notifyDirectMessageDelete(messageId: string) {
+  return notifyWsServer("conversation:message:delete", messageId);
+}
+
+export async function notifyUserStatusUpdate(userId: string, status: string) {
+  return notifyWsServer("user:status", { userId, status });
+}
+
+export async function notifyMemberJoin(serverId: string, userId: string) {
+  return notifyWsServer("member:join", { serverId, userId });
+}
+
+export async function notifyMemberLeave(serverId: string, userId: string) {
+  return notifyWsServer("member:leave", { serverId, userId });
+}
+
+export async function notifyMemberUpdate(serverId: string, memberId: string) {
+  return notifyWsServer("member:update", { serverId, memberId });
+}
+
+export async function notifyFriendRequest(userId: string, friendId: string) {
+  return notifyWsServer("user:request-friend", { userId, friendId });
+}

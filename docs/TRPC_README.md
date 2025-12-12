@@ -97,7 +97,7 @@ export const messageRouter = router({
       z.object({
         content: z.string(),
         channelId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Your logic

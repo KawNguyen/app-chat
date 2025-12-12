@@ -3,6 +3,9 @@ import { router, publicProcedure, protectedProcedure } from "../trpc";
 import prisma from "@/lib/prisma";
 import { TRPCError } from "@trpc/server";
 import { UserStatus } from "@/types";
+import { observable } from "@trpc/server/observable";
+import { eventEmitter } from "../event-emitter";
+import { notifyUserStatusUpdate } from "@/lib/ws-notify";
 
 /**
  * User router - handles user-related operations
@@ -17,7 +20,7 @@ export const userRouter = router({
       select: {
         id: true,
         email: true,
-        username: true,
+        userName: true,
         displayName: true,
         image: true,
         banner: true,
@@ -39,6 +42,36 @@ export const userRouter = router({
     return user;
   }),
 
+  getById: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const user = await prisma.user.findUnique({
+        where: { id: input.userId },
+        select: {
+          id: true,
+          userName: true,
+          displayName: true,
+          image: true,
+          banner: true,
+          bio: true,
+          status: true,
+          customStatus: true,
+          createdAt: true,
+        },
+      });
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+      return user;
+    }),
+
   /**
    * Update username
    */
@@ -51,15 +84,15 @@ export const userRouter = router({
           .max(20, "Username cannot exceed 20 characters")
           .regex(
             /^[a-zA-Z0-9_]+$/,
-            "Username can only contain letters, numbers and underscores"
+            "Username can only contain letters, numbers and underscores",
           ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if username is already in use
       const existingUser = await prisma.user.findFirst({
         where: {
-          username: input.username,
+          userName: input.username,
           NOT: {
             id: ctx.user.id,
           },
@@ -76,10 +109,10 @@ export const userRouter = router({
       // Update username
       const updatedUser = await prisma.user.update({
         where: { id: ctx.user.id },
-        data: { username: input.username },
+        data: { userName: input.username },
         select: {
           id: true,
-          username: true,
+          userName: true,
         },
       });
 
@@ -96,7 +129,7 @@ export const userRouter = router({
           UserStatus.DND,
           UserStatus.INVISIBLE,
         ]),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const updatedUser = await prisma.user.update({
@@ -108,7 +141,49 @@ export const userRouter = router({
         },
       });
 
+      // Emit local event
+      eventEmitter.emit("user:status", {
+        userId: ctx.user.id,
+        status: input.status,
+      });
+
+      // Notify WebSocket server (cross-process)
+      await notifyUserStatusUpdate(ctx.user.id, input.status);
+
       return updatedUser;
+    }),
+
+  onStatusUpdate: publicProcedure
+    .input(
+      z.object({
+        userIds: z.array(z.string()), // danh sách userId muốn theo dõi
+      }),
+    )
+    .subscription(({ input }) => {
+      return observable<{ userId: string; status: string }>((emit) => {
+        const onStatus = (
+          data: { userId: string; status: string } | string,
+          status?: string,
+        ) => {
+          // Handle both formats: (userId, status) and ({ userId, status })
+          const userId = typeof data === "string" ? data : data.userId;
+          const statusValue = typeof data === "string" ? status! : data.status;
+
+          // Chỉ emit nếu user này nằm trong danh sách đang theo dõi
+          if (input.userIds.includes(userId)) {
+            emit.next({
+              userId: userId,
+              status: statusValue,
+            });
+          }
+        };
+
+        eventEmitter.on("user:status", onStatus);
+
+        return () => {
+          eventEmitter.off("user:status", onStatus);
+        };
+      });
     }),
 
   updateProfile: protectedProcedure
@@ -118,7 +193,7 @@ export const userRouter = router({
         bio: z.string().max(500).optional(),
         image: z.string().url().optional().or(z.literal("")),
         banner: z.string().url().optional().or(z.literal("")),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const updatedUser = await prisma.user.update({
@@ -142,41 +217,6 @@ export const userRouter = router({
     }),
 
   /**
-   * Get user information by ID (public)
-   */
-  getById: publicProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const user = await prisma.user.findUnique({
-        where: { id: input.userId },
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          image: true,
-          banner: true,
-          bio: true,
-          status: true,
-          customStatus: true,
-          createdAt: true,
-        },
-      });
-
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      return user;
-    }),
-
-  /**
    * Search users
    */
   search: publicProcedure
@@ -184,14 +224,14 @@ export const userRouter = router({
       z.object({
         query: z.string().min(1),
         limit: z.number().min(1).max(50).default(10),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const users = await prisma.user.findMany({
         where: {
           OR: [
             {
-              username: {
+              userName: {
                 contains: input.query,
                 mode: "insensitive",
               },
@@ -206,7 +246,7 @@ export const userRouter = router({
         },
         select: {
           id: true,
-          username: true,
+          userName: true,
           displayName: true,
           image: true,
           status: true,

@@ -3,7 +3,8 @@ import { UserAvatar } from "@/components/user-avatar";
 
 interface UserCardProps {
   user: {
-    name: string;
+    userName: string;
+    displayName: string;
     email: string;
     image?: string;
     status?: UserStatus;
@@ -27,7 +28,7 @@ export function UserCard({ user, currentStatus }: UserCardProps) {
       <div className="mt-3 space-y-0.5">
         <div className="flex items-center gap-1">
           <span className="text-base font-semibold text-foreground truncate">
-            {user.name}
+            {user.displayName ? user.displayName : user.userName}
           </span>
         </div>
         <div className="text-xs text-muted-foreground">

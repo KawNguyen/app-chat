@@ -10,7 +10,7 @@ interface UserAvatarProps {
     image?: string | null;
     status?: string | UserStatus;
   };
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   sizeStatus?: string;
   className?: string;
   fallbackClassName?: string;
@@ -22,6 +22,7 @@ const sizeClasses = {
   sm: "h-8 w-8",
   md: "h-10 w-10",
   lg: "h-16 w-16",
+  xl: "h-20 w-20",
 };
 
 const fallbackSizeClasses = {
@@ -29,6 +30,7 @@ const fallbackSizeClasses = {
   sm: "text-xs",
   md: "text-sm",
   lg: "text-lg",
+  xl: "text-xl",
 };
 
 const statusConfig = {
@@ -59,7 +61,7 @@ export function UserAvatar({
           className={cn(
             "rounded-full bg-blue-700 text-white font-semibold",
             fallbackSizeClasses[size],
-            fallbackClassName
+            fallbackClassName,
           )}
         >
           {initials}
@@ -67,11 +69,13 @@ export function UserAvatar({
       </Avatar>
 
       {showStatus && (
-        <div className={`absolute -bottom-0.5 -right-0.5 size-${sizeStatus} rounded-full border-[3px] border-background bg-background`}>
+        <div
+          className={`absolute -bottom-0.5 -right-0.5 size-${sizeStatus} rounded-full border-[3px] border-background bg-background`}
+        >
           <div
             className={cn(
               "w-full h-full rounded-full",
-              statusConfig[userStatus]
+              statusConfig[userStatus],
             )}
           />
         </div>

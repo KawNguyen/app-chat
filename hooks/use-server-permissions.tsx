@@ -54,7 +54,7 @@ export function ServerPermissionsProvider({
       gcTime: 10 * 60 * 1000,
       // Refetch when window regains focus
       refetchOnWindowFocus: false,
-    }
+    },
   );
 
   const hasChannelPermission = (channelId: string, permission: string) => {
@@ -103,7 +103,7 @@ export function useServerPermissions() {
   const context = useContext(ServerPermissionsContext);
   if (!context) {
     throw new Error(
-      "useServerPermissions must be used within ServerPermissionsProvider"
+      "useServerPermissions must be used within ServerPermissionsProvider",
     );
   }
   return context;

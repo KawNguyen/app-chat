@@ -2,10 +2,9 @@
 
 import { ScrollArea } from "../../ui/scroll-area";
 import Image from "next/image";
-import { MessageInput } from "./message-input";
 import { trpc } from "@/lib/trpc/react";
-import { toast } from "sonner";
 import { UserAvatar } from "@/components/user-avatar";
+import { useRef, useEffect } from "react";
 
 interface ChatAreaProps {
   channelId: string;
@@ -13,31 +12,32 @@ interface ChatAreaProps {
 
 export function ChatArea({ channelId }: ChatAreaProps) {
   const utils = trpc.useUtils();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data } = trpc.message.getMessages.useQuery({
-    channelId,
-    limit: 50,
-  });
+  const { data } = trpc.message.getMessages.useQuery(
+    {
+      channelId,
+      limit: 50,
+    },
+    {
+      staleTime: 30 * 1000, // 30 seconds
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [data]);
 
   // Subscribe to new messages
   trpc.message.onNewMessage.useSubscription(
     { channelId },
     {
       onData: () => {
-        // Invalidate query to refetch messages
         utils.message.getMessages.invalidate({ channelId, limit: 50 });
       },
-    }
+    },
   );
-
-  const sendMessage = trpc.message.sendMessage.useMutation({
-    onSuccess: () => {
-      utils.message.getMessages.invalidate({ channelId, limit: 50 });
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send message");
-    },
-  });
 
   const formatTimestamp = (date: Date) => {
     return new Intl.DateTimeFormat("vi-VN", {
@@ -46,51 +46,55 @@ export function ChatArea({ channelId }: ChatAreaProps) {
     }).format(new Date(date));
   };
 
-  const handleSendMessage = (content: string) => {
-    sendMessage.mutate({ channelId, content });
-  };
-
   const messages = data?.messages || [];
 
   return (
-    <div className="flex flex-col h-full px-3 pb-3">
-      <ScrollArea className="flex-1">
+    <div className="flex h-full flex-col">
+      <ScrollArea className="flex-1 h-full">
         {/* Messages */}
-        <div className="flex flex-col gap-0.5 px-4 pb-4 pt-4">
+        <div className="flex flex-col px-4 pb-4 pt-4">
           {messages.map((msg, idx: number) => {
-            const showAvatar =
-              idx === 0 || messages[idx - 1].userId !== msg.userId;
+            const FIVE_MINUTES = 5 * 60 * 1000;
 
-            const displayName =
-              msg.member?.nickname ||
-              msg.user?.displayName ||
-              msg.user?.name ||
-              "User";
+            const showAvatar =
+              idx === 0 ||
+              messages[idx - 1].userId !== msg.userId ||
+              new Date(msg.createdAt).getTime() -
+                new Date(messages[idx - 1].createdAt).getTime() >
+                FIVE_MINUTES;
+
+            const displayName = msg.member?.nickname || "User";
 
             return (
               <div key={msg.id} className="group">
-                <div className="flex gap-4 hover:bg-accent/30 px-2 py-1 rounded transition-colors">
-                  <div className="w-10 shrink-0">
+                <div
+                  className={`flex gap-4 hover:bg-accent/30 -mx-2 px-2 rounded transition-colors ${
+                    showAvatar ? "mt-[17px] py-0.5" : "py-0.5"
+                  }`}
+                >
+                  <div className="w-10 shrink-0 pt-0.5">
                     {showAvatar ? (
-                      <UserAvatar user={msg.user} size="md" />
+                      <UserAvatar user={msg.member.user} size="md" />
                     ) : (
-                      <div className="w-10 h-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-[10px] text-muted-foreground">
                           {formatTimestamp(msg.createdAt)}
                         </span>
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pt-0.5">
                     {showAvatar && (
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <p className="font-semibold text-sm">{displayName}</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="flex items-baseline gap-2 mb-0.5">
+                        <p className="font-semibold text-[15px]">
+                          {displayName}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
                           {formatTimestamp(msg.createdAt)}
                         </p>
                       </div>
                     )}
-                    <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
+                    <p className="text-foreground text-[15px] leading-5.5 whitespace-pre-wrap wrap-break-word">
                       {msg.content}
                       {msg.isEdited && (
                         <span className="text-[10px] text-muted-foreground ml-1">
@@ -130,7 +134,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
                                 📎 {attachment.name}
                               </a>
                             );
-                          }
+                          },
                         )}
                       </div>
                     )}
@@ -140,9 +144,8 @@ export function ChatArea({ channelId }: ChatAreaProps) {
             );
           })}
         </div>
+        <div ref={messagesEndRef} />
       </ScrollArea>
-
-      <MessageInput channelName="chat" onSendMessage={handleSendMessage} />
     </div>
   );
 }

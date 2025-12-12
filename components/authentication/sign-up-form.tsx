@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import OAuthButtons from "./oauth-buttons";
-import { signUp } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -18,11 +17,10 @@ export default function SignUpForm() {
 
   const form = useForm({
     defaultValues: {
-      username: "",
       email: "",
+      username: "",
       password: "",
       confirmPassword: "",
-      name: "",
     },
     onSubmit: async ({ value }) => {
       if (value.password !== value.confirmPassword) {
@@ -30,15 +28,29 @@ export default function SignUpForm() {
         return;
       }
 
+      if (!value.username || value.username.trim() === "") {
+        toast.error("Username is required");
+        return;
+      }
+
       try {
-        const result = await signUp.email({
-          email: value.email,
-          password: value.password,
-          name: value.name || value.username,
+        // Sử dụng custom endpoint để xử lý username
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: value.email,
+            password: value.password,
+            username: value.username,
+          }),
         });
 
-        if (result.error) {
-          toast.error(result.error.message || "Sign up failed");
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          toast.error(data.error || "Sign up failed");
           return;
         }
 
@@ -60,37 +72,6 @@ export default function SignUpForm() {
         }}
         className="space-y-6"
       >
-        {/* Username Field */}
-        <form.Field name="username">
-          {(field) => (
-            <div className="space-y-3 animate-fade-in">
-              <label
-                htmlFor="username"
-                className="block text-sm font-semibold text-cyan-200"
-              >
-                Username
-              </label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Choose your username"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  className="pl-12 bg-purple-950/30 border border-purple-600/30 hover:border-purple-500/50 focus:border-purple-500 focus:shadow-[0_0_10px_rgba(204,102,255,0.3)] transition-all text-white placeholder:text-purple-300/30 h-11 rounded-lg"
-                />
-              </div>
-              {field.state.meta.errors && (
-                <p className="text-xs text-pink-400">
-                  {field.state.meta.errors.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-        </form.Field>
-
         {/* Email Field */}
         <form.Field name="email">
           {(field) => (
@@ -115,6 +96,37 @@ export default function SignUpForm() {
               </div>
               {field.state.meta.errors && (
                 <p className="text-xs text-emerald-400">
+                  {field.state.meta.errors.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+        </form.Field>
+
+        {/* Username Field */}
+        <form.Field name="username">
+          {(field) => (
+            <div className="space-y-3 animate-fade-in">
+              <label
+                htmlFor="username"
+                className="block text-sm font-semibold text-cyan-200"
+              >
+                Username
+              </label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Choose your username"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onBlur={field.handleBlur}
+                  className="pl-12 bg-purple-950/30 border border-purple-600/30 hover:border-purple-500/50 focus:border-purple-500 focus:shadow-[0_0_10px_rgba(204,102,255,0.3)] transition-all text-white placeholder:text-purple-300/30 h-11 rounded-lg"
+                />
+              </div>
+              {field.state.meta.errors && (
+                <p className="text-xs text-pink-400">
                   {field.state.meta.errors.join(", ")}
                 </p>
               )}

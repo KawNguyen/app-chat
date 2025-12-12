@@ -12,7 +12,7 @@ export const permissionRouter = router({
     .input(
       z.object({
         serverId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Get member info with roles
@@ -91,7 +91,7 @@ export const permissionRouter = router({
             categoryId: channel.categoryId,
             permissions: Object.values(Permissions).reduce(
               (acc, p) => acc | p,
-              0n
+              0n,
             ),
             canView: true,
             canSend: true,
@@ -152,7 +152,7 @@ export const permissionRouter = router({
 
       // Add uncategorized channels
       const uncategorized = channelPermissions.filter(
-        (cp) => !cp.categoryId && cp.canView
+        (cp) => !cp.categoryId && cp.canView,
       );
 
       return {
@@ -167,7 +167,7 @@ export const permissionRouter = router({
         uncategorizedChannels: uncategorized,
         // All channels (for quick lookup by channelId)
         channelPermissionsMap: Object.fromEntries(
-          channelPermissions.map((cp) => [cp.channelId, cp])
+          channelPermissions.map((cp) => [cp.channelId, cp]),
         ),
       };
     }),
@@ -181,7 +181,7 @@ export const permissionRouter = router({
       z.object({
         channelId: z.string(),
         permission: z.string(), // "SEND_MESSAGES", "MANAGE_CHANNELS", etc.
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const channel = await prisma.channel.findUnique({

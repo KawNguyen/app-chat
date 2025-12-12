@@ -125,7 +125,7 @@ export const messageRouter = router({
       z.object({
         channelId: z.string(),
         limit: z.number().min(1).max(100).default(50),
-      })
+      }),
     )
     .query(async ({ input }) => {
       return await prisma.message.findMany({
@@ -141,7 +141,7 @@ export const messageRouter = router({
       z.object({
         channelId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return await prisma.message.create({

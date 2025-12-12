@@ -207,7 +207,7 @@ trpc.permission.getServerPermissions.useSubscription(
     onData: () => {
       utils.permission.getServerPermissions.invalidate({ serverId });
     },
-  }
+  },
 );
 ```
 

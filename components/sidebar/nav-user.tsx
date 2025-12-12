@@ -11,17 +11,14 @@ import { Button } from "../ui/button";
 import { useVoiceControls } from "@/hooks/use-voice-controls";
 import { UserStatus } from "@/types";
 import { useState } from "react";
-import {
-  UserCard,
-  UserMenuItems,
-  VoiceControls,
-} from "./user-nav";
+import { UserCard, UserMenuItems, VoiceControls } from "./user-nav";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string;
+    userName: string;
+    displayName: string;
     email: string;
     image?: string;
     status?: UserStatus;
@@ -34,7 +31,7 @@ export function NavUser({
   >(
     user.status && user.status !== UserStatus.OFFLINE
       ? (user.status as Exclude<UserStatus, UserStatus.OFFLINE>)
-      : UserStatus.ONLINE
+      : UserStatus.ONLINE,
   );
 
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceControls();
@@ -54,10 +51,10 @@ export function NavUser({
             <UserAvatar user={user} size="sm" showStatus />
             <div className="flex-1 text-left overflow-hidden">
               <div className="text-xs font-semibold text-foreground truncate">
-                {user.name}
+                {user.displayName ? user.displayName : user.userName}
               </div>
               <div className="text-[10px] text-muted-foreground truncate">
-                #{user.email.split("@")[0]}
+                #{user.userName}
               </div>
             </div>
           </Button>

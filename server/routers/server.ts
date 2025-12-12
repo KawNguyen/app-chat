@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
+import { eventEmitter } from "../event-emitter";
+import { notifyMemberJoin, notifyMemberLeave } from "@/lib/ws-notify";
 
 export const serverRouter = router({
   listServerJoined: protectedProcedure.query(async ({ ctx }) => {
@@ -48,7 +50,7 @@ export const serverRouter = router({
     .input(
       z.object({
         inviteCode: z.string().min(6).max(25),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const server = await prisma.server.findUnique({
@@ -66,6 +68,13 @@ export const serverRouter = router({
           serverId: server.id,
         },
       });
+
+      // Notify member join
+      eventEmitter.emit("member:join", {
+        serverId: server.id,
+        userId: ctx.user.id,
+      });
+      await notifyMemberJoin(server.id, ctx.user.id);
     }),
 
   createServer: protectedProcedure
@@ -74,7 +83,7 @@ export const serverRouter = router({
         name: z.string().min(3).max(100),
         icon: z.string().url().optional(),
         description: z.string().max(255).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const newServer = await prisma.server.create({
@@ -151,7 +160,7 @@ export const serverRouter = router({
         name: z.string().min(3).max(100).optional(),
         icon: z.string().url().optional(),
         description: z.string().max(255).optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const server = await prisma.server.updateMany({
@@ -177,7 +186,7 @@ export const serverRouter = router({
     .input(
       z.object({
         serverId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify ownership first
@@ -223,7 +232,7 @@ export const serverRouter = router({
     .input(
       z.object({
         serverId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       await prisma.member.deleteMany({
@@ -232,6 +241,14 @@ export const serverRouter = router({
           userId: ctx.user.id,
         },
       });
+
+      // Notify member leave
+      eventEmitter.emit("member:leave", {
+        serverId: input.serverId,
+        userId: ctx.user.id,
+      });
+      await notifyMemberLeave(input.serverId, ctx.user.id);
+
       return { success: true };
     }),
 
@@ -239,7 +256,7 @@ export const serverRouter = router({
     .input(
       z.object({
         serverId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const member = await prisma.member.findFirst({
@@ -268,7 +285,7 @@ export const serverRouter = router({
     .input(
       z.object({
         serverId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const server = await prisma.server.findFirst({
@@ -304,7 +321,7 @@ export const serverRouter = router({
       z.object({
         serverId: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if requester is a member

@@ -14,6 +14,8 @@ export function getWsClient() {
   if (!_wsClient) {
     _wsClient = createWSClient({
       url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001",
+      // No need to manually send cookies - browser sends them automatically
+      // in the WebSocket upgrade request (including HttpOnly cookies)
     });
   }
 
@@ -28,6 +30,15 @@ export function closeWsClient() {
     _wsClient.close();
     _wsClient = null;
   }
+}
+
+/**
+ * Reconnect WebSocket with fresh authentication token
+ * Call this after login to ensure the connection has valid credentials
+ */
+export function reconnectWsClient() {
+  closeWsClient();
+  return getWsClient();
 }
 
 /**

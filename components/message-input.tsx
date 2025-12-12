@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, KeyboardEvent } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "./ui/button";
 import { Smile, Plus, Gift, Sticker } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -9,8 +9,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../../ui/tooltip";
-import { Textarea } from "../../ui/textarea";
+} from "./ui/tooltip";
+import { Textarea } from "./ui/textarea";
 
 interface MessageInputProps {
   channelName?: string;
@@ -50,7 +50,7 @@ export function MessageInput({
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(
         textareaRef.current.scrollHeight,
-        200
+        200,
       )}px`;
     }
   };
@@ -88,7 +88,7 @@ export function MessageInput({
           "w-full bg-transparent resize-none outline-none border-0 focus:ring-0 ring-0 active:ring-0 focus-visible:ring-0",
           "px-14 py-3 text-sm",
           "placeholder:text-muted-foreground",
-          "min-h-11 max-h-[200px]"
+          "min-h-11 max-h-[200px]",
         )}
         rows={1}
       />

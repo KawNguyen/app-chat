@@ -2,6 +2,10 @@ import prisma from "@/lib/prisma";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
+import { observable } from "@trpc/server/observable";
+import { eventEmitter } from "../event-emitter";
+import { DirectMessage } from "@/types";
+import { notifyNewDirectMessage } from "@/lib/ws-notify";
 
 export const conversationRouter = router({
   /**
@@ -25,7 +29,7 @@ export const conversationRouter = router({
                 user: {
                   select: {
                     id: true,
-                    username: true,
+                    userName: true,
                     displayName: true,
                     image: true,
                     status: true,
@@ -64,20 +68,46 @@ export const conversationRouter = router({
     .input(
       z.object({
         otherUserId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if conversation already exists
+      // Validate other user exists
+      const otherUser = await prisma.user.findUnique({
+        where: { id: input.otherUserId },
+      });
+
+      if (!otherUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // Check if conversation already exists (exactly 2 participants)
       const existingConversation = await prisma.conversation.findFirst({
         where: {
-          isGroup: false,
-          participants: {
-            every: {
-              userId: {
-                in: [ctx.user.id, input.otherUserId],
+          AND: [
+            { isGroup: false },
+            {
+              participants: {
+                some: { userId: ctx.user.id },
               },
             },
-          },
+            {
+              participants: {
+                some: { userId: input.otherUserId },
+              },
+            },
+            {
+              participants: {
+                none: {
+                  userId: {
+                    notIn: [ctx.user.id, input.otherUserId],
+                  },
+                },
+              },
+            },
+          ],
         },
         include: {
           participants: {
@@ -85,7 +115,7 @@ export const conversationRouter = router({
               user: {
                 select: {
                   id: true,
-                  username: true,
+                  userName: true,
                   displayName: true,
                   image: true,
                   status: true,
@@ -114,7 +144,7 @@ export const conversationRouter = router({
               user: {
                 select: {
                   id: true,
-                  username: true,
+                  userName: true,
                   displayName: true,
                   image: true,
                   status: true,
@@ -135,7 +165,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const conversation = await prisma.conversation.findFirst({
@@ -153,7 +183,7 @@ export const conversationRouter = router({
               user: {
                 select: {
                   id: true,
-                  username: true,
+                  userName: true,
                   displayName: true,
                   image: true,
                   status: true,
@@ -172,5 +202,162 @@ export const conversationRouter = router({
       }
 
       return conversation;
+    }),
+
+  /**
+   * Get messages in a conversation
+   */
+  getConversationMessages: protectedProcedure
+    .input(
+      z.object({
+        conversationId: z.string(),
+        limit: z.number().min(1).max(100).default(50),
+        cursor: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // Verify user is part of conversation
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: input.conversationId,
+          participants: {
+            some: {
+              userId: ctx.user.id,
+            },
+          },
+        },
+      });
+
+      if (!conversation) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conversation not found",
+        });
+      }
+
+      const messages = await prisma.directMessage.findMany({
+        where: {
+          conversationId: input.conversationId,
+        },
+        take: input.limit + 1,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              image: true,
+              status: true,
+            },
+          },
+          attachments: true,
+        },
+      });
+
+      let nextCursor: string | undefined = undefined;
+      if (messages.length > input.limit) {
+        const nextItem = messages.pop();
+        nextCursor = nextItem?.id;
+      }
+
+      return {
+        messages: messages.reverse(),
+        nextCursor,
+      };
+    }),
+
+  /**
+   * Send a message in a conversation
+   */
+  sendConversationMessage: protectedProcedure
+    .input(
+      z.object({
+        conversationId: z.string(),
+        content: z.string().min(1).max(2000),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify user is part of conversation
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          id: input.conversationId,
+          participants: {
+            some: {
+              userId: ctx.user.id,
+            },
+          },
+        },
+      });
+
+      if (!conversation) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conversation not found",
+        });
+      }
+
+      const message = await prisma.directMessage.create({
+        data: {
+          content: input.content,
+          conversationId: input.conversationId,
+          senderId: ctx.user.id,
+        },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              image: true,
+              status: true,
+            },
+          },
+          attachments: true,
+        },
+      });
+
+      // Update conversation timestamp
+      await prisma.conversation.update({
+        where: { id: input.conversationId },
+        data: { updatedAt: new Date() },
+      });
+
+      eventEmitter.emit("conversation:message:new", message);
+
+      await notifyNewDirectMessage({
+        id: message.id,
+        content: message.content,
+        conversationId: message.conversationId,
+        senderId: message.senderId,
+        createdAt: message.createdAt,
+      });
+
+      return message;
+    }),
+
+  onNewConversationMessage: protectedProcedure
+    .input(
+      z.object({
+        conversationId: z.string(),
+      }),
+    )
+    .subscription(({ input }) => {
+      return observable<{ message: DirectMessage }>((emit) => {
+        const handler = (msg: DirectMessage) => {
+          if (msg.conversationId === input.conversationId) {
+            emit.next({ message: msg });
+          }
+        };
+
+        eventEmitter.on("conversation:message:new", handler);
+
+        return () => {
+          eventEmitter.off("conversation:message:new", handler);
+        };
+      });
     }),
 });

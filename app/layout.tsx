@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TRPCProvider } from "@/providers/trpc-provider";
+import { UserStatusProvider } from "@/providers/user-status-provider";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
       >
-        <TRPCProvider>{children}</TRPCProvider>
+        <TRPCProvider>
+          <UserStatusProvider>{children}</UserStatusProvider>
+        </TRPCProvider>
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>

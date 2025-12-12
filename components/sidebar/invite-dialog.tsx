@@ -29,12 +29,12 @@ export function InviteDialog({ serverId, serverName }: InviteDialogProps) {
 
   const { data: inviteCode } = trpc.server.getInviteCode.useQuery(
     { serverId },
-    { enabled: open }
+    { enabled: open },
   );
 
   const { data: searchResults } = trpc.user.search.useQuery(
     { query: searchQuery, limit: 5 },
-    { enabled: searchQuery.length >= 2 }
+    { enabled: searchQuery.length >= 2 },
   );
 
   const inviteUser = trpc.server.inviteUser.useMutation({
@@ -146,14 +146,14 @@ export function InviteDialog({ serverId, serverName }: InviteDialogProps) {
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-xs">
-                            {user.username?.slice(0, 2).toUpperCase() || "U"}
+                            {user.userName?.slice(0, 2).toUpperCase() || "U"}
                           </div>
                           <div>
                             <div className="text-sm font-medium">
-                              {user.displayName || user.username}
+                              {user.displayName || user.userName}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              @{user.username}
+                              @{user.userName}
                             </div>
                           </div>
                         </div>

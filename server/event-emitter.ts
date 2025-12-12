@@ -1,3 +1,4 @@
+import { DirectMessage } from "@/types";
 import EventEmitter from "events";
 
 export interface Message {
@@ -8,39 +9,36 @@ export interface Message {
   createdAt: Date;
 }
 
+// 1) Tạo bảng type mapping cho tất cả events
+type Events = {
+  "message:new": Message;
+  "message:update": Message;
+  "message:delete": string;
+
+  "member:join": { serverId: string; userId: string };
+  "member:leave": { serverId: string; userId: string };
+  "member:update": { serverId: string; memberId: string };
+
+  "user:status": { userId: string; status: string };
+  "user:friend-request": { userId: string; friendId: string };
+
+  "conversation:message:new": DirectMessage;
+  "direct-message:update": DirectMessage;
+  "direct-message:delete": string;
+};
+
+// 2) Class EventEmitter type-safe
 class MyEventEmitter extends EventEmitter {
-  // Type-safe event emitter
-  on(event: "message:new", listener: (message: Message) => void): this;
-  on(event: "message:update", listener: (message: Message) => void): this;
-  on(event: "message:delete", listener: (messageId: string) => void): this;
-  on(
-    event: "member:join",
-    listener: (data: { serverId: string; userId: string }) => void
-  ): this;
-  on(
-    event: "member:leave",
-    listener: (data: { serverId: string; userId: string }) => void
-  ): this;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  on(event: string, listener: (...args: any[]) => void): this {
+  // ---- on() type-safe ----
+  on<K extends keyof Events>(event: K, listener: (payload: Events[K]) => void) {
     return super.on(event, listener);
   }
 
-  emit(event: "message:new", message: Message): boolean;
-  emit(event: "message:update", message: Message): boolean;
-  emit(event: "message:delete", messageId: string): boolean;
-  emit(
-    event: "member:join",
-    data: { serverId: string; userId: string }
-  ): boolean;
-  emit(
-    event: "member:leave",
-    data: { serverId: string; userId: string }
-  ): boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  emit(event: string, ...args: any[]): boolean {
-    return super.emit(event, ...args);
+  // ---- emit() type-safe ----
+  emit<K extends keyof Events>(event: K, payload: Events[K]) {
+    return super.emit(event, payload);
   }
 }
 
+// 3) Export Singleton
 export const eventEmitter = new MyEventEmitter();

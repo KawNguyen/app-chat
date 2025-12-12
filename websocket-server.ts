@@ -54,7 +54,8 @@ const httpServer = createServer((req, res) => {
     req.on("end", () => {
       try {
         const { event, data } = JSON.parse(body);
-        eventEmitter.emit(event, data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        eventEmitter.emit(event as any, data);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true }));
       } catch {
@@ -71,7 +72,7 @@ const httpServer = createServer((req, res) => {
 httpServer.listen(HTTP_PORT, () => {
   console.log(`✅ WebSocket Server listening on ws://localhost:${WS_PORT}`);
   console.log(
-    `✅ HTTP Notification Server listening on http://localhost:${HTTP_PORT}`
+    `✅ HTTP Notification Server listening on http://localhost:${HTTP_PORT}`,
   );
 });
 

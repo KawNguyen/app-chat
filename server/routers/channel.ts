@@ -7,7 +7,7 @@ export const channelRouter = router({
     .input(
       z.object({
         channelId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const channel = await prisma.channel.findUnique({
@@ -42,7 +42,7 @@ export const channelRouter = router({
         name: z.string().min(1).max(100),
         categoryId: z.enum(["text", "voice"]),
         serverId: z.string().uuid(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       const channel = await prisma.channel.create({

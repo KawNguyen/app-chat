@@ -57,7 +57,7 @@ export const DEFAULT_PERMISSIONS =
  */
 export const ADMIN_PERMISSIONS = Object.values(Permissions).reduce(
   (acc, perm) => acc | perm,
-  0n
+  0n,
 );
 
 /**
@@ -65,7 +65,7 @@ export const ADMIN_PERMISSIONS = Object.values(Permissions).reduce(
  */
 export function hasPermission(
   userPermissions: bigint,
-  permission: bigint
+  permission: bigint,
 ): boolean {
   // Administrator has all permissions
   if (

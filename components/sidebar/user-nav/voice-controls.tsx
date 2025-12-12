@@ -34,7 +34,7 @@ export function VoiceControls({
                 "h-8 w-8",
                 isMuted
                   ? "text-destructive hover:text-destructive"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={onToggleMute}
             >
@@ -60,7 +60,7 @@ export function VoiceControls({
                 "h-8 w-8",
                 isDeafened
                   ? "text-destructive hover:text-destructive"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={onToggleDeafen}
             >
