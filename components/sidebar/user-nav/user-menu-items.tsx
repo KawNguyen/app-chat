@@ -9,6 +9,7 @@ import { UserStatus } from "@/types";
 interface UserMenuItemsProps {
   user: {
     email: string;
+    status?: UserStatus;
   };
   currentStatus: Exclude<UserStatus, UserStatus.OFFLINE>;
   onStatusChange: (status: Exclude<UserStatus, UserStatus.OFFLINE>) => void;
@@ -17,7 +18,6 @@ interface UserMenuItemsProps {
 
 export function UserMenuItems({
   user,
-  currentStatus,
   onStatusChange,
   onEditProfile,
 }: UserMenuItemsProps) {
@@ -39,7 +39,7 @@ export function UserMenuItems({
         {/* Status Menu */}
         <div className="p-2">
           <UserStatusMenu
-            currentStatus={currentStatus}
+            currentStatus={user.status as Exclude<UserStatus, UserStatus.OFFLINE>}
             onStatusChange={onStatusChange}
           />
         </div>

@@ -89,6 +89,18 @@ export async function notifyMemberUpdate(serverId: string, memberId: string) {
   return notifyWsServer("member:update", { serverId, memberId });
 }
 
-export async function notifyFriendRequest(userId: string, friendId: string) {
-  return notifyWsServer("user:request-friend", { userId, friendId });
+export async function notifyFriendRequest(payload: {
+  receiverId: string;
+  request: {
+    id: string;
+    sender: {
+      id: string;
+      userName: string | null;
+      displayName: string | null;
+      image: string | null;
+    };
+    createdAt: Date;
+  };
+}) {
+  return notifyWsServer("user:friend-request", payload);
 }

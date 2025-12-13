@@ -2,6 +2,9 @@ import prisma from "@/lib/prisma";
 import { protectedProcedure, router } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
+import { eventEmitter } from "../event-emitter";
+import { observable } from "@trpc/server/observable";
+import { notifyFriendRequest } from "@/lib/ws-notify";
 
 export const friendRouter = router({
   /**
@@ -63,7 +66,7 @@ export const friendRouter = router({
     .input(
       z.object({
         userName: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Find user by username
@@ -102,34 +105,185 @@ export const friendRouter = router({
         });
       }
 
-      // Check for existing pending request
+      // Check for existing request
       const existingRequest = await prisma.friendRequest.findFirst({
         where: {
           OR: [
             { senderId: ctx.user.id, receiverId: receiver.id },
             { senderId: receiver.id, receiverId: ctx.user.id },
           ],
-          status: "PENDING",
         },
       });
 
       if (existingRequest) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Friend request already exists",
+        // If receiver already sent a request to sender, auto-accept it
+        if (
+          existingRequest.senderId === receiver.id &&
+          existingRequest.receiverId === ctx.user.id &&
+          existingRequest.status === "PENDING"
+        ) {
+          // Check if conversation already exists
+          const existingConversation = await prisma.conversation.findFirst({
+            where: {
+              AND: [
+                {
+                  participants: {
+                    some: { userId: ctx.user.id },
+                  },
+                },
+                {
+                  participants: {
+                    some: { userId: receiver.id },
+                  },
+                },
+                {
+                  participants: {
+                    none: {
+                      userId: {
+                        notIn: [ctx.user.id, receiver.id],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          });
+
+          // Auto-accept the request and create friendship
+          await prisma.$transaction(async (tx) => {
+            // Create friendships
+            await tx.friend.createMany({
+              data: [
+                {
+                  userId: ctx.user.id,
+                  friendId: receiver.id,
+                },
+                {
+                  userId: receiver.id,
+                  friendId: ctx.user.id,
+                },
+              ],
+            });
+
+            // Update request status
+            await tx.friendRequest.update({
+              where: { id: existingRequest.id },
+              data: { status: "ACCEPTED" },
+            });
+
+            // Create conversation if it doesn't exist
+            if (!existingConversation) {
+              await tx.conversation.create({
+                data: {
+                  participants: {
+                    create: [{ userId: ctx.user.id }, { userId: receiver.id }],
+                  },
+                },
+              });
+            }
+          });
+
+          return {
+            id: existingRequest.id,
+            sender: {
+              id: receiver.id,
+              userName: receiver.userName,
+              displayName: receiver.displayName,
+              image: receiver.image,
+            },
+            createdAt: existingRequest.createdAt,
+          };
+        }
+
+        // If there's a pending request from sender to receiver
+        if (existingRequest.status === "PENDING") {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Friend request already exists",
+          });
+        }
+
+        // If there's an old request (DECLINED/ACCEPTED), delete it and create a new one
+        await prisma.friendRequest.delete({
+          where: { id: existingRequest.id },
         });
       }
 
-      // Create friend request
+      // Create new friend request
       const request = await prisma.friendRequest.create({
         data: {
           senderId: ctx.user.id,
           receiverId: receiver.id,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              image: true,
+            },
+          },
+        },
       });
+
+      const payload = {
+        receiverId: receiver.id,
+        request: {
+          id: request.id,
+          sender: request.sender,
+          createdAt: request.createdAt,
+        },
+      };
+
+      // Emit event for real-time notification
+      eventEmitter.emit("user:friend-request", payload);
+
+      await notifyFriendRequest(payload);
 
       return request;
     }),
+
+  /**
+   * Subscribe to friend requests for the current user
+   */
+  onFriendRequest: protectedProcedure.subscription(({ ctx }) => {
+    return observable<{
+      id: string;
+      sender: {
+        id: string;
+        userName: string | null;
+        displayName: string | null;
+        image: string | null;
+      };
+      createdAt: Date;
+    }>((emit) => {
+      const handler = (payload: {
+        receiverId: string;
+        request: {
+          id: string;
+          sender: {
+            id: string;
+            userName: string | null;
+            displayName: string | null;
+            image: string | null;
+          };
+          createdAt: Date;
+        };
+      }) => {
+        // Only emit to the receiver of the friend request
+        if (payload.receiverId === ctx.user.id) {
+          emit.next(payload.request);
+        }
+      };
+
+      eventEmitter.on("user:friend-request", handler);
+
+      return () => {
+        eventEmitter.off("user:friend-request", handler);
+      };
+    });
+  }),
 
   /**
    * Accept friend request
@@ -138,7 +292,7 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
@@ -211,7 +365,8 @@ export const friendRouter = router({
             },
           });
 
-          console.log("✅ Created conversation:", conversation.id);
+          // console.log("✅ Created conversation:", conversation.id)
+          return conversation;
         }
       });
 
@@ -225,7 +380,7 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
@@ -254,7 +409,7 @@ export const friendRouter = router({
     .input(
       z.object({
         friendId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       await prisma.friend.deleteMany({

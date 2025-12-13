@@ -26,7 +26,7 @@ export async function generateUniqueUsername(
 
   while (true) {
     const existingUser = await prisma.user.findFirst({
-      where: { username },
+      where: { userName: username },
     });
 
     if (!existingUser) {
@@ -57,12 +57,12 @@ export async function ensureUserHasUsername(
 ): Promise<string | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { username: true },
+    select: { userName: true },
   });
 
   // If username exists, return it
-  if (user?.username) {
-    return user.username;
+  if (user?.userName) {
+    return user.userName;
   }
 
   // Generate new username
@@ -71,7 +71,7 @@ export async function ensureUserHasUsername(
   // Update database
   await prisma.user.update({
     where: { id: userId },
-    data: { username: newUsername },
+    data: { userName: newUsername },
   });
 
   return newUsername;

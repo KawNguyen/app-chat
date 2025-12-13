@@ -4,10 +4,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { FriendRequestListener } from "@/components/friend-request-listener";
+import { DirectMessageListener } from "@/components/direct-message-listener";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
+      <FriendRequestListener />
+      <DirectMessageListener />
       <ResizablePanelGroup direction="horizontal" className="w-max">
         <ResizablePanel
           defaultSize={22}

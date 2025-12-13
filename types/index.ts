@@ -114,7 +114,6 @@ export interface Server {
   isPublic: boolean;
   ownerId: string;
   categories: Category[];
-  channels: Channel[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -250,7 +249,6 @@ export interface Conversation {
   isGroup: boolean;
   name: string | null;
   icon: string | null;
-  isHidden: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -259,6 +257,7 @@ export interface ConversationParticipant {
   id: string;
   userId: string;
   conversationId: string;
+  isHidden: boolean;
   joinedAt: Date;
   lastReadAt: Date | null;
 }
@@ -271,23 +270,23 @@ export interface DirectMessage {
   isEdited: boolean;
   createdAt: Date;
   updatedAt: Date;
-  // sender?: {
-  //   id: string;
-  //   userName: string | null;
-  //   displayName: string | null;
-  //   image: string | null;
-  //   status: UserStatus;
-  // };
-  // attachments?: {
-  //   id: string;
-  //   name: string;
-  //   url: string;
-  //   size: number;
-  //   type: string;
-  //   messageId: string | null;
-  //   directMessageId: string | null;
-  //   createdAt: Date;
-  // }[];
+  sender?: {
+    id: string;
+    userName: string | null;
+    displayName: string | null;
+    image: string | null;
+    status: string;
+  };
+  attachments?: {
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+    messageId: string | null;
+    directMessageId: string | null;
+    createdAt: Date;
+  }[];
 }
 
 // ==================== FRIEND & BLOCK TYPES ====================

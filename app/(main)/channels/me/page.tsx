@@ -19,6 +19,7 @@ import { AddFriendDialog } from "@/components/direct-chat/components/add-friend-
 import { toast } from "sonner";
 import { useUserStatus } from "@/providers/user-status-provider";
 import { UserStatus } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 type TabType = "online" | "all" | "pending" | "blocked";
 
@@ -76,7 +77,6 @@ const Page = () => {
 
   const acceptRequest = trpc.friend.acceptFriendRequest.useMutation({
     onSuccess: () => {
-      toast.success("Friend request accepted! You can now message each other.");
       utils.friend.listFriends.invalidate();
       utils.friend.listPendingRequests.invalidate();
       utils.conversation.listConversations.invalidate();
@@ -149,7 +149,15 @@ const Page = () => {
               onClick={() => setActiveTab("pending")}
               className="h-8"
             >
-              Pending
+              Pending{" "}
+              {pendingRequests.length > 0 && (
+                <Badge
+                  className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums"
+                  variant={"destructive"}
+                >
+                  {pendingRequests.length}
+                </Badge>
+              )}
             </Button>
             <AddFriendDialog />
           </div>

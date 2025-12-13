@@ -20,7 +20,19 @@ type Events = {
   "member:update": { serverId: string; memberId: string };
 
   "user:status": { userId: string; status: string };
-  "user:friend-request": { userId: string; friendId: string };
+  "user:friend-request": {
+    receiverId: string;
+    request: {
+      id: string;
+      sender: {
+        id: string;
+        userName: string | null;
+        displayName: string | null;
+        image: string | null;
+      };
+      createdAt: Date;
+    };
+  };
 
   "conversation:message:new": DirectMessage;
   "direct-message:update": DirectMessage;

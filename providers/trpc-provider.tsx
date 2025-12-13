@@ -17,7 +17,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: false,
           },
         },
-      }),
+      })
   );
 
   const [trpcClient] = useState(() => {
@@ -26,7 +26,12 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     return trpc.createClient({
       links: [
         splitLink({
-          condition: (op) => op.type === "subscription",
+          condition: (op) => {
+            const isSubscription = op.type === "subscription";
+            if (isSubscription) {
+            }
+            return isSubscription;
+          },
           true: wsClient
             ? wsLink({
                 client: wsClient,

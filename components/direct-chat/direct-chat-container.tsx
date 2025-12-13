@@ -30,6 +30,7 @@ export default function DirectChatContainer({
   const sendMessage = trpc.conversation.sendConversationMessage.useMutation({
     onSuccess: () => {
       utils.conversation.getConversationMessages.invalidate({ conversationId });
+      utils.conversation.listConversations.invalidate();
     },
   });
 

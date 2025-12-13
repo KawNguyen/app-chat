@@ -18,7 +18,7 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
-  const utils = trpc.useUtils();
+  // const utils = trpc.useUtils();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { data } = trpc.conversation.getConversationMessages.useQuery(
     {
@@ -35,16 +35,16 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [data]);
 
-  trpc.conversation.onNewConversationMessage.useSubscription(
-    { conversationId },
-    {
-      onData: () => {
-        utils.conversation.getConversationMessages.invalidate({
-          conversationId,
-        });
-      },
-    },
-  );
+  // trpc.conversation.onGlobalNewMessage.useSubscription(
+  //   undefined,
+  //   {
+  //     onData: () => {
+  //       utils.conversation.getConversationMessages.invalidate({
+  //         conversationId,
+  //       });
+  //     },
+  //   },
+  // );
 
   const formatTimestamp = (date: Date) => {
     return new Intl.DateTimeFormat("vi-VN", {

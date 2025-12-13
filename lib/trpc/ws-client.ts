@@ -12,10 +12,17 @@ export function getWsClient() {
   if (typeof window === "undefined") return null;
 
   if (!_wsClient) {
+    console.log("🔌 Creating WebSocket client...");
     _wsClient = createWSClient({
       url: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001",
       // No need to manually send cookies - browser sends them automatically
       // in the WebSocket upgrade request (including HttpOnly cookies)
+      onOpen: () => {
+        console.log("✅ WebSocket connected");
+      },
+      onClose: () => {
+        console.log("❌ WebSocket disconnected");
+      },
     });
   }
 

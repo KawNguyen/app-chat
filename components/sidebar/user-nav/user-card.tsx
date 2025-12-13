@@ -9,19 +9,13 @@ interface UserCardProps {
     image?: string;
     status?: UserStatus;
   };
-  currentStatus: Exclude<UserStatus, UserStatus.OFFLINE>;
 }
 
-export function UserCard({ user, currentStatus }: UserCardProps) {
+export function UserCard({ user }: UserCardProps) {
   return (
     <div className="p-3 pb-2.5 rounded-t-md bg-card">
       <div className="flex items-start gap-3">
-        <UserAvatar
-          user={{ ...user, status: currentStatus }}
-          size="lg"
-          sizeStatus="5"
-          showStatus
-        />
+        <UserAvatar user={{ ...user }} size="lg" sizeStatus="5" showStatus />
       </div>
 
       {/* User Info */}
