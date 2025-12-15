@@ -1,10 +1,9 @@
 "use client";
 
 import { ScrollArea } from "../../ui/scroll-area";
-import Image from "next/image";
 import { trpc } from "@/lib/trpc/react";
-import { UserAvatar } from "@/components/user-avatar";
 import { useRef, useEffect } from "react";
+import { MessageItem } from "../../message-item";
 
 interface ChatAreaProps {
   channelId: string;
@@ -47,6 +46,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
   };
 
   const messages = data?.messages || [];
+  const { data: currentUser } = trpc.user.me.useQuery();
 
   return (
     <div className="flex h-full flex-col">
@@ -63,84 +63,14 @@ export function ChatArea({ channelId }: ChatAreaProps) {
                 new Date(messages[idx - 1].createdAt).getTime() >
                 FIVE_MINUTES;
 
-            const displayName = msg.member?.nickname || "User";
-
             return (
-              <div key={msg.id} className="group">
-                <div
-                  className={`flex gap-4 hover:bg-accent/30 -mx-2 px-2 rounded transition-colors ${
-                    showAvatar ? "mt-[17px] py-0.5" : "py-0.5"
-                  }`}
-                >
-                  <div className="w-10 shrink-0 pt-0.5">
-                    {showAvatar ? (
-                      <UserAvatar user={msg.member.user} size="md" />
-                    ) : (
-                      <div className="w-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatTimestamp(msg.createdAt)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    {showAvatar && (
-                      <div className="flex items-baseline gap-2 mb-0.5">
-                        <p className="font-semibold text-[15px]">
-                          {displayName}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {formatTimestamp(msg.createdAt)}
-                        </p>
-                      </div>
-                    )}
-                    <p className="text-foreground text-[15px] leading-5.5 whitespace-pre-wrap wrap-break-word">
-                      {msg.content}
-                      {msg.isEdited && (
-                        <span className="text-[10px] text-muted-foreground ml-1">
-                          (edited)
-                        </span>
-                      )}
-                    </p>
-                    {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {msg.attachments.map(
-                          (attachment: {
-                            id: string;
-                            type: string;
-                            url: string;
-                            name: string;
-                          }) => {
-                            if (attachment.type.startsWith("image/")) {
-                              return (
-                                <Image
-                                  key={attachment.id}
-                                  src={attachment.url}
-                                  alt={attachment.name}
-                                  width={400}
-                                  height={300}
-                                  className="rounded max-w-sm max-h-80 object-cover"
-                                />
-                              );
-                            }
-                            return (
-                              <a
-                                key={attachment.id}
-                                href={attachment.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-2 bg-accent rounded text-sm hover:bg-accent/80 transition-colors"
-                              >
-                                📎 {attachment.name}
-                              </a>
-                            );
-                          },
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <MessageItem
+                key={msg.id}
+                message={msg}
+                currentUserId={currentUser?.id}
+                showAvatar={showAvatar}
+                formatTimestamp={formatTimestamp}
+              />
             );
           })}
         </div>

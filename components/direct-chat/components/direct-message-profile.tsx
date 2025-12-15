@@ -35,7 +35,7 @@ export function DirectMessageProfile({
   const { data: conversationData } =
     trpc.conversation.getConversationById.useQuery(
       { conversationId },
-      { enabled: !!conversationId }
+      { enabled: !!conversationId },
     );
 
   const isFriend = conversationData?.isFriend ?? false;

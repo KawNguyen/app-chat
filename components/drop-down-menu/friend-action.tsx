@@ -49,10 +49,19 @@ const FriendAction = ({
     onSuccess: () => {
       toast.success(`Removed ${displayName} from your friends`);
       setShowRemoveDialog(false);
+
+      // Update friends list cache
+      const previousFriends = utils.friend.listFriends.getData();
+      if (previousFriends) {
+        const updatedFriends = previousFriends.filter((f) => f.id !== user.id);
+        utils.friend.listFriends.setData(undefined, updatedFriends);
+      }
+
+      // Update conversation cache if exists
       if (conversationId) {
+        // Just invalidate this one since structure is complex
         utils.conversation.getConversationById.invalidate({ conversationId });
       }
-      utils.friend.listFriends.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to remove friend");
@@ -61,8 +70,12 @@ const FriendAction = ({
 
   const sendFriendRequestMutation = trpc.friend.sendFriendRequest.useMutation({
     onSuccess: () => {
-      utils.friend.listPendingRequests.invalidate();
-      utils.conversation.getConversationById.invalidate({ conversationId });
+      // Update conversation cache to reflect pending status
+      if (conversationId) {
+        // Invalidate conversation to get updated friendRequestStatus
+        utils.conversation.getConversationById.invalidate({ conversationId });
+      }
+      // No need to invalidate pending requests here - user sent the request
     },
     onError: (error) => {
       toast.error(error.message || "Failed to send friend request");

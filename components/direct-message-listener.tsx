@@ -26,24 +26,82 @@ export function DirectMessageListener() {
     onData(data) {
       const message = data.message;
 
-      // Don't show notification if it's the current user's message
-      if (message.senderId === currentUserId) {
-        return;
-      }
-
       // Check if user is currently viewing this conversation
       const isViewingConversation =
         pathname === `/channels/me/${message.conversationId}`;
 
-      // Always invalidate queries to update UI
-      utils.conversation.listConversations.invalidate();
-      utils.conversation.getConversationMessages.invalidate({
-        conversationId: message.conversationId,
-      });
+      // Update cache directly instead of invalidating
+      const previousMessages =
+        utils.conversation.getConversationMessages.getData({
+          conversationId: message.conversationId,
+        });
+
+      if (previousMessages && message.sender) {
+        // Check if message already exists (avoid duplicates)
+        const messageExists = previousMessages.messages.some(
+          (m) => m.id === message.id,
+        );
+        if (!messageExists) {
+          // Add message to cache with proper structure
+          const messageWithAttachments = {
+            ...message,
+            attachments: message.attachments || [],
+          };
+
+          utils.conversation.getConversationMessages.setData(
+            { conversationId: message.conversationId },
+            {
+              ...previousMessages,
+              messages: [
+                ...previousMessages.messages,
+                messageWithAttachments,
+              ] as typeof previousMessages.messages,
+            },
+          );
+        }
+      } else if (isViewingConversation) {
+        // Only invalidate if viewing and no cache exists
+        utils.conversation.getConversationMessages.invalidate({
+          conversationId: message.conversationId,
+        });
+      }
+
+      // Update conversations list in cache
+      const previousConversations =
+        utils.conversation.listConversations.getData();
+      if (previousConversations) {
+        const updatedConversations = previousConversations.map((conv) => {
+          if (conv.id === message.conversationId) {
+            // Increment unread count if not viewing this conversation
+            const newUnreadCount = isViewingConversation
+              ? 0
+              : (conv.unreadCount || 0) + 1;
+
+            return {
+              ...conv,
+              lastMessage: message,
+              updatedAt: message.createdAt,
+              unreadCount: newUnreadCount,
+            };
+          }
+          return conv;
+        });
+        utils.conversation.listConversations.setData(
+          undefined,
+          updatedConversations,
+        );
+      } else {
+        // Only invalidate if no cache exists
+        utils.conversation.listConversations.invalidate();
+      }
+
+      // Only show notification if it's NOT the current user's message
+      if (message.senderId === currentUserId) {
+        return; // Don't show notification for own messages
+      }
 
       // Show notification even without sender (we'll fetch it)
       if (!isViewingConversation) {
-
         try {
           // Play notification sound
           playSound("/sounds/notification.mp3");
@@ -81,7 +139,7 @@ export function DirectMessageListener() {
           {
             duration: 4000,
             className: "cursor-pointer hover:bg-accent",
-          }
+          },
         );
         console.log("📬 Toast shown with ID:", toastId);
       }

@@ -31,11 +31,15 @@ function ChannelListContent({
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
       suspense: true,
-    }
+    },
   ) as { data: Server };
   console.log(server);
-  
-  const channelId = getLastChannelForServer(serverId) || server?.categories.find((t)=> t.name === "TEXT CHANNELS")?.channels?.[0]?.id || null;
+
+  const channelId =
+    getLastChannelForServer(serverId) ||
+    server?.categories.find((t) => t.name === "TEXT CHANNELS")?.channels?.[0]
+      ?.id ||
+    null;
 
   const { data: currentUser } = trpc.user.me.useQuery(undefined, {
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -39,7 +39,7 @@ export function UserStatusMenu({
   });
 
   const handleStatusChange = (
-    status: Exclude<UserStatus, UserStatus.OFFLINE>
+    status: Exclude<UserStatus, UserStatus.OFFLINE>,
   ) => {
     // Update local state immediately for better UX
     onStatusChange(status);
@@ -57,7 +57,7 @@ export function UserStatusMenu({
           <div
             className={cn(
               "h-2.5 w-2.5 rounded-full",
-              statusConfig[currentStatus].color
+              statusConfig[currentStatus].color,
             )}
           />
           <span>{statusConfig[currentStatus].label}</span>
@@ -74,7 +74,7 @@ export function UserStatusMenu({
                 disabled={updateStatus.isPending}
                 onClick={() =>
                   handleStatusChange(
-                    status as Exclude<UserStatus, UserStatus.OFFLINE>
+                    status as Exclude<UserStatus, UserStatus.OFFLINE>,
                   )
                 }
               >

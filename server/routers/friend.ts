@@ -66,7 +66,7 @@ export const friendRouter = router({
     .input(
       z.object({
         userName: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Find user by username
@@ -292,11 +292,23 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
         where: { id: input.requestId },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              userName: true,
+              displayName: true,
+              image: true,
+              status: true,
+              customStatus: true,
+            },
+          },
+        },
       });
 
       if (!request || request.receiverId !== ctx.user.id) {
@@ -334,6 +346,8 @@ export const friendRouter = router({
       });
 
       // Create friendship (both directions) and conversation
+      let conversationId = existingConversation?.id;
+
       await prisma.$transaction(async (tx) => {
         // Create friendships
         await tx.friend.createMany({
@@ -365,12 +379,15 @@ export const friendRouter = router({
             },
           });
 
-          // console.log("✅ Created conversation:", conversation.id)
-          return conversation;
+          conversationId = conversation.id;
         }
       });
 
-      return { success: true };
+      return {
+        success: true,
+        friend: request.sender,
+        conversationId,
+      };
     }),
 
   /**
@@ -380,7 +397,7 @@ export const friendRouter = router({
     .input(
       z.object({
         requestId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const request = await prisma.friendRequest.findUnique({
@@ -409,7 +426,7 @@ export const friendRouter = router({
     .input(
       z.object({
         friendId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       await prisma.friend.deleteMany({

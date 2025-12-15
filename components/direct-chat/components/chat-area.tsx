@@ -1,10 +1,11 @@
 "use client";
 
 import { ScrollArea } from "../../ui/scroll-area";
-import Image from "next/image";
 import { trpc } from "@/lib/trpc/react";
 import { UserAvatar } from "@/components/user-avatar";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { MessageItem } from "../../message-item";
+import { UserProfilePopover } from "../../user-profile-popover";
 
 interface ChatAreaProps {
   conversationId: string;
@@ -18,8 +19,12 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
-  // const utils = trpc.useUtils();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const utils = trpc.useUtils();
+  const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(
+    null,
+  );
+
   const { data } = trpc.conversation.getConversationMessages.useQuery(
     {
       conversationId,
@@ -30,6 +35,48 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
       refetchOnWindowFocus: false,
     },
   );
+
+  // Mark as read mutation
+  const markAsRead = trpc.conversation.markAsRead.useMutation({
+    onSuccess: () => {
+      // Update conversations list to clear unread count
+      utils.conversation.listConversations.invalidate();
+    },
+  });
+
+  // Auto mark as read when viewing conversation
+  useEffect(() => {
+    if (conversationId) {
+      // Mark as read after a short delay to ensure messages are loaded
+      const timer = setTimeout(() => {
+        markAsRead.mutate({ conversationId });
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
+
+  // Get lastReadAt to show separator
+  useEffect(() => {
+    const fetchLastRead = async () => {
+      const conversations = utils.conversation.listConversations.getData();
+      const currentConv = conversations?.find((c) => c.id === conversationId);
+      if (currentConv?.lastReadAt && data?.messages) {
+        // Find the last message that was read
+        const lastReadMsg = data.messages.find(
+          (m) => new Date(m.createdAt) <= new Date(currentConv.lastReadAt!),
+        );
+        if (lastReadMsg) {
+          setLastReadMessageId(lastReadMsg.id);
+        }
+      }
+    };
+    fetchLastRead();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, conversationId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,12 +109,30 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
         {/* Welcome Message */}
         {messages.length === 0 && otherUser && (
           <div className="flex flex-col items-center justify-center h-full px-4 text-center py-20">
-            <div className="relative">
-              <UserAvatar user={otherUser} size="lg" showStatus={false} />
-            </div>
-            <h2 className="mt-6 text-2xl font-bold">
-              {otherUser.displayName || otherUser.userName}
-            </h2>
+            <UserProfilePopover
+              user={otherUser}
+              displayName={
+                otherUser.displayName || otherUser.userName || "User"
+              }
+              side="right"
+              align="center"
+            >
+              <div className="relative cursor-pointer">
+                <UserAvatar user={otherUser} size="lg" showStatus={false} />
+              </div>
+            </UserProfilePopover>
+            <UserProfilePopover
+              user={otherUser}
+              displayName={
+                otherUser.displayName || otherUser.userName || "User"
+              }
+              side="right"
+              align="center"
+            >
+              <h2 className="mt-6 text-2xl font-bold hover:underline cursor-pointer">
+                {otherUser.displayName || otherUser.userName}
+              </h2>
+            </UserProfilePopover>
             <p className="mt-2 text-sm text-muted-foreground max-w-md">
               This is the beginning of your direct message history with{" "}
               <span className="font-semibold">
@@ -87,86 +152,31 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
             const showAvatar =
               idx === 0 || messages[idx - 1].senderId !== msg.senderId;
 
-            const isCurrentUser = msg.senderId === currentUser?.id;
-            const displayName = isCurrentUser
-              ? currentUser?.displayName || currentUser?.userName || "You"
-              : msg.sender.displayName || msg.sender.userName || "User";
+            // Check if this is the first unread message
+            const isFirstUnread =
+              lastReadMessageId &&
+              idx > 0 &&
+              messages[idx - 1].id === lastReadMessageId;
 
             return (
-              <div key={msg.id} className="group relative">
-                <div
-                  className={`flex gap-4 hover:bg-secondary/30 -mx-2 px-2 rounded transition-colors ${
-                    showAvatar ? "mt-[17px] py-0.5" : "py-0.5"
-                  }`}
-                >
-                  <div className="w-10 shrink-0 pt-0.5">
-                    {showAvatar ? (
-                      <UserAvatar user={msg.sender} size="md" />
-                    ) : (
-                      <div className="w-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatTimestamp(msg.createdAt)}
-                        </span>
-                      </div>
-                    )}
+              <div key={msg.id} className="relative">
+                {/* Unread Separator Line - Discord style */}
+                {isFirstUnread && (
+                  <div className="flex items-center my-2 -mx-4">
+                    <div className="flex-1 h-px bg-red-500" />
+                    <span className="px-2 text-xs font-semibold text-red-500">
+                      NEW
+                    </span>
+                    <div className="flex-1 h-px bg-red-500" />
                   </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    {showAvatar && (
-                      <div className="flex items-baseline gap-2 mb-0.5">
-                        <p className="font-semibold text-[15px] text-foreground hover:underline cursor-pointer">
-                          {displayName}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {formatTimestamp(msg.createdAt)}
-                        </p>
-                      </div>
-                    )}
-                    <p className="text-foreground text-[15px] leading-5.5 wrap-break-word">
-                      {msg.content}
-                      {msg.isEdited && (
-                        <span className="text-[10px] text-muted-foreground ml-1">
-                          (edited)
-                        </span>
-                      )}
-                    </p>
-                    {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {msg.attachments.map(
-                          (attachment: {
-                            id: string;
-                            type: string;
-                            url: string;
-                            name: string;
-                          }) => {
-                            if (attachment.type.startsWith("image/")) {
-                              return (
-                                <Image
-                                  key={attachment.id}
-                                  src={attachment.url}
-                                  alt={attachment.name}
-                                  width={400}
-                                  height={300}
-                                  className="rounded-md max-w-sm max-h-80 object-cover border"
-                                />
-                              );
-                            }
-                            return (
-                              <a
-                                key={attachment.id}
-                                href={attachment.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-2 bg-secondary rounded text-sm hover:bg-secondary/80 transition-colors border"
-                              >
-                                📎 {attachment.name}
-                              </a>
-                            );
-                          },
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
+
+                <MessageItem
+                  message={msg}
+                  currentUserId={currentUser?.id}
+                  showAvatar={showAvatar}
+                  formatTimestamp={formatTimestamp}
+                />
               </div>
             );
           })}

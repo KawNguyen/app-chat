@@ -66,7 +66,7 @@ export function NavUser({
           sideOffset={8}
         >
           {/* User Card */}
-          <UserCard user={user}/>
+          <UserCard user={user} />
 
           {/* Menu Items */}
           <UserMenuItems

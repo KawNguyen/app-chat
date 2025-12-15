@@ -25,14 +25,8 @@ export default function DirectChatContainer({
 }: DirectChatContainerProps) {
   const [collapsed, setCollapsed] = useState(true);
   const memberPanelRef = useRef<ImperativePanelHandle>(null);
-  const utils = trpc.useUtils();
 
-  const sendMessage = trpc.conversation.sendConversationMessage.useMutation({
-    onSuccess: () => {
-      utils.conversation.getConversationMessages.invalidate({ conversationId });
-      utils.conversation.listConversations.invalidate();
-    },
-  });
+  const sendMessage = trpc.conversation.sendConversationMessage.useMutation();
 
   const handleSendMessage = (content: string) => {
     sendMessage.mutate({ conversationId, content });

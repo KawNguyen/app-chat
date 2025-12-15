@@ -39,7 +39,9 @@ export function UserMenuItems({
         {/* Status Menu */}
         <div className="p-2">
           <UserStatusMenu
-            currentStatus={user.status as Exclude<UserStatus, UserStatus.OFFLINE>}
+            currentStatus={
+              user.status as Exclude<UserStatus, UserStatus.OFFLINE>
+            }
             onStatusChange={onStatusChange}
           />
         </div>

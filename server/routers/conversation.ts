@@ -9,6 +9,40 @@ import { notifyNewDirectMessage } from "@/lib/ws-notify";
 
 export const conversationRouter = router({
   /**
+   * Mark conversation as read
+   */
+  markAsRead: protectedProcedure
+    .input(
+      z.object({
+        conversationId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify user is part of conversation
+      const participant = await prisma.conversationParticipant.findFirst({
+        where: {
+          conversationId: input.conversationId,
+          userId: ctx.user.id,
+        },
+      });
+
+      if (!participant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Conversation not found",
+        });
+      }
+
+      // Update lastReadAt to current time
+      await prisma.conversationParticipant.update({
+        where: { id: participant.id },
+        data: { lastReadAt: new Date() },
+      });
+
+      return { success: true };
+    }),
+
+  /**
    * List all conversations for current user
    */
   listConversations: protectedProcedure.query(async ({ ctx }) => {
@@ -95,6 +129,34 @@ export const conversationRouter = router({
           }
         }
 
+        // Calculate unread count
+        const lastReadAt = cp.lastReadAt;
+        let unreadCount = 0;
+
+        if (lastReadAt) {
+          unreadCount = await prisma.directMessage.count({
+            where: {
+              conversationId: cp.conversation.id,
+              createdAt: {
+                gt: lastReadAt,
+              },
+              senderId: {
+                not: ctx.user.id, // Don't count own messages
+              },
+            },
+          });
+        } else if (cp.conversation.messages[0]) {
+          // If never read, count all messages from others
+          unreadCount = await prisma.directMessage.count({
+            where: {
+              conversationId: cp.conversation.id,
+              senderId: {
+                not: ctx.user.id,
+              },
+            },
+          });
+        }
+
         return {
           id: cp.conversation.id,
           otherUser: cp.conversation.participants[0]?.user,
@@ -102,8 +164,10 @@ export const conversationRouter = router({
           updatedAt: cp.conversation.updatedAt,
           isFriend,
           friendRequestStatus,
+          lastReadAt,
+          unreadCount,
         };
-      })
+      }),
     );
 
     return conversationsWithFriendStatus;
@@ -116,7 +180,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         otherUserId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Validate other user exists
@@ -213,7 +277,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const conversation = await prisma.conversation.findFirst({
@@ -251,7 +315,7 @@ export const conversationRouter = router({
 
       // Get the other user (for DM conversations)
       const otherParticipant = conversation.participants.find(
-        (p) => p.userId !== ctx.user.id
+        (p) => p.userId !== ctx.user.id,
       );
       const otherUserId = otherParticipant?.user?.id;
 
@@ -309,7 +373,7 @@ export const conversationRouter = router({
         conversationId: z.string(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -374,7 +438,7 @@ export const conversationRouter = router({
       z.object({
         conversationId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -463,7 +527,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -501,7 +565,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .subscription(({ input }) => {
       return observable<{ message: DirectMessage }>((emit) => {
@@ -577,7 +641,7 @@ export const conversationRouter = router({
         return () => {
           eventEmitter.off("conversation:message:new", handler);
         };
-      }
+      },
     );
   }),
 });

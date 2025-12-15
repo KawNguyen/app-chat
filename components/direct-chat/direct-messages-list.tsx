@@ -29,6 +29,8 @@ interface Conversation {
     isEdited: boolean;
   };
   updatedAt: Date;
+  unreadCount?: number;
+  lastReadAt?: Date | null;
 }
 
 interface DirectMessagesListProps {
@@ -75,12 +77,14 @@ function DirectMessagesList({
           conversations.map((conv: Conversation) => {
             const currentStatus =
               getUserStatus(conv.otherUser.id) || conv.otherUser.status;
+            const hasUnread = (conv.unreadCount ?? 0) > 0;
+
             return (
               <Link
                 key={conv.id}
                 href={`/channels/me/${conv.id}`}
                 className={cn(
-                  "flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#202022] transition-colors group",
+                  "flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#202022] transition-colors group relative",
                   activeConversationId === conv.id
                     ? "bg-[#202022] text-white  hover:bg-[#131314]"
                     : "text-[#b5bac1] hover:text-white",
@@ -91,12 +95,26 @@ function DirectMessagesList({
                 }}
               >
                 <>
-                  <UserAvatar
-                    user={{ ...conv.otherUser, status: currentStatus }}
-                    size="sm"
-                    showStatus
-                  />
-                  <span className="text-sm font-medium truncate flex-1">
+                  <div className="relative">
+                    <UserAvatar
+                      user={{ ...conv.otherUser, status: currentStatus }}
+                      size="sm"
+                      showStatus
+                    />
+                    {hasUnread && (
+                      <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-[10px] font-bold text-white">
+                          {conv.unreadCount! > 9 ? "9+" : conv.unreadCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-sm truncate flex-1",
+                      hasUnread ? "font-bold text-white" : "font-medium",
+                    )}
+                  >
                     {conv.otherUser?.displayName || conv.otherUser?.userName}
                   </span>
                 </>

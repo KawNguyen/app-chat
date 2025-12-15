@@ -76,10 +76,33 @@ const Page = () => {
     });
 
   const acceptRequest = trpc.friend.acceptFriendRequest.useMutation({
-    onSuccess: () => {
-      utils.friend.listFriends.invalidate();
-      utils.friend.listPendingRequests.invalidate();
-      utils.conversation.listConversations.invalidate();
+    onSuccess: (data, variables) => {
+      // Update friends list cache directly
+      const previousFriends = utils.friend.listFriends.getData();
+      if (previousFriends && data.friend) {
+        utils.friend.listFriends.setData(undefined, [
+          ...previousFriends,
+          data.friend,
+        ]);
+      } else {
+        utils.friend.listFriends.invalidate();
+      }
+
+      // Update pending requests cache - remove accepted request
+      const previousRequests = utils.friend.listPendingRequests.getData();
+      if (previousRequests) {
+        const updatedRequests = previousRequests.filter(
+          (r) => r.id !== variables.requestId,
+        );
+        utils.friend.listPendingRequests.setData(undefined, updatedRequests);
+      } else {
+        utils.friend.listPendingRequests.invalidate();
+      }
+
+      // Update conversations list - only invalidate if new conversation created
+      if (data.conversationId) {
+        utils.conversation.listConversations.invalidate();
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Failed to accept request");
@@ -87,9 +110,19 @@ const Page = () => {
   });
 
   const declineRequest = trpc.friend.declineFriendRequest.useMutation({
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast.success("Friend request declined");
-      utils.friend.listPendingRequests.invalidate();
+
+      // Update pending requests cache - remove declined request
+      const previousRequests = utils.friend.listPendingRequests.getData();
+      if (previousRequests) {
+        const updatedRequests = previousRequests.filter(
+          (r) => r.id !== variables.requestId,
+        );
+        utils.friend.listPendingRequests.setData(undefined, updatedRequests);
+      } else {
+        utils.friend.listPendingRequests.invalidate();
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Failed to decline request");

@@ -17,7 +17,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: false,
           },
         },
-      })
+      }),
   );
 
   const [trpcClient] = useState(() => {
