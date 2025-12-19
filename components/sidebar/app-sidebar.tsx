@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { NavUser } from "@/components/sidebar/nav-user";
 import { signOut } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
@@ -13,16 +13,19 @@ import { ChannelList } from "./channel-list";
 function SidebarContent() {
   const params = useParams();
   const serverIdFromUrl = params?.serverId as string | undefined;
+  const router = useRouter();
 
   const { data: user } = trpc.user.me.useQuery(undefined, {
     staleTime: 5 * 60 * 1000, // 5 minutes
   }) as { data: User };
 
+  console.log(user);
+
   const { data: servers = [] } = trpc.server.listServerJoined.useQuery(
     undefined,
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
-    },
+    }
   ) as {
     data: Server[];
   };
@@ -34,7 +37,7 @@ function SidebarContent() {
 
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<string | null>(
-    null,
+    null
   );
 
   const handleServerSelect = (serverId: string | null) => {
@@ -52,6 +55,11 @@ function SidebarContent() {
 
   const handleConversationSelect = (conversationId: string) => {
     setActiveConversation(conversationId);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push("/auth");
   };
 
   return (
@@ -86,8 +94,10 @@ function SidebarContent() {
             email: user?.email || "",
             image: user?.image || undefined,
             status: user?.status as unknown as UserStatus,
+            banner: user?.banner || "",
+            bio: user?.bio || undefined,
           }}
-          logout={() => signOut()}
+          logout={handleLogout}
         />
       </div>
     </aside>

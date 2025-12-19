@@ -11,8 +11,8 @@ interface UserMenuItemsProps {
     email: string;
     status?: UserStatus;
   };
-  currentStatus: Exclude<UserStatus, UserStatus.OFFLINE>;
-  onStatusChange: (status: Exclude<UserStatus, UserStatus.OFFLINE>) => void;
+  currentStatus: UserStatus;
+  onStatusChange: (status: UserStatus) => void;
   onEditProfile: () => void;
 }
 
@@ -22,7 +22,7 @@ export function UserMenuItems({
   onEditProfile,
 }: UserMenuItemsProps) {
   return (
-    <>
+    <div className="space-y-4">
       {/* Edit Profile */}
       <div className="bg-[#1e1f22] mx-4 rounded-lg overflow-hidden ">
         <div className="p-2">
@@ -40,7 +40,7 @@ export function UserMenuItems({
         <div className="p-2">
           <UserStatusMenu
             currentStatus={
-              user.status as Exclude<UserStatus, UserStatus.OFFLINE>
+              user.status as UserStatus
             }
             onStatusChange={onStatusChange}
           />
@@ -72,6 +72,6 @@ export function UserMenuItems({
           </DropdownMenuItem>
         </div>
       </div>
-    </>
+    </div>
   );
 }

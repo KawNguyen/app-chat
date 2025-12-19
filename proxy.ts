@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-const guestRoutes = ["/sign-in", "/sign-up"];
+const guestRoutes = ["/auth"];
 
 export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -22,7 +22,7 @@ export async function proxy(request: NextRequest) {
 
   // If not logged in and accessing protected routes -> redirect to sign-in
   if (!session?.user && !guestRoutes.includes(url.pathname)) {
-    url.pathname = "/sign-in";
+    url.pathname = "/auth";
     return NextResponse.redirect(url);
   }
 

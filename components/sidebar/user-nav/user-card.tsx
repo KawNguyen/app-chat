@@ -8,33 +8,41 @@ interface UserCardProps {
     email: string;
     image?: string;
     status?: UserStatus;
+    bio?: string;
+    banner: string;
   };
 }
 
 export function UserCard({ user }: UserCardProps) {
   return (
-    <div className="p-3 pb-2.5 rounded-t-md bg-card">
-      <div className="flex items-start gap-3">
-        <UserAvatar user={{ ...user }} size="lg" sizeStatus="5" showStatus />
+    <div className="rounded-t-md bg-card mb-2">
+      <div className={`h-28 w-full relative flex items-start gap-3 ${user.banner} mb-14`}>
+        <div className={`h-full w-full ${user.banner ? user.banner : `bg-blue-700`}`}></div>
+        <div className="absolute -bottom-12 left-4 h-max w-max rounded-full border-4 border-card">
+          <UserAvatar user={{ ...user }} size="xl" sizeStatus="5" showStatus />
+        </div>
       </div>
 
       {/* User Info */}
-      <div className="mt-3 space-y-0.5">
+      <div className="mt-3 mx-4">
         <div className="flex items-center gap-1">
-          <span className="text-base font-semibold text-foreground truncate">
+          <span className="text-lg font-semibold text-foreground truncate">
             {user.displayName ? user.displayName : user.userName}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {user.email.split("@")[0]}
-        </div>
+        <span className="text-[12px] text-muted-foreground truncate">
+          {user.userName}
+        </span>
       </div>
 
       {/* Custom Status */}
-      <div className="mt-2 text-xs text-muted-foreground italic border-t pt-2 whitespace-pre-line">
-        &ldquo;Nhiệm vụ nào cũng hoàn thành{"\n"}Khó khăn nào cũng vượt qua
-        {"\n"}Kẻ thù nào cũng đánh thắng&rdquo;
-      </div>
+      {user.bio && (
+        <div
+          className={`mt-2 mx-4 text-xs text-muted-foreground italic whitespace-pre-line`}
+        >
+          {user.bio}
+        </div>
+      )}
     </div>
   );
 }

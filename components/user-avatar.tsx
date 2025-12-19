@@ -11,7 +11,7 @@ interface UserAvatarProps {
     status?: string | UserStatus;
   };
   size?: "xs" | "sm" | "md" | "lg" | "xl";
-  sizeStatus?: string;
+  sizeStatus?: "3.5" | "5" | "6";
   className?: string;
   fallbackClassName?: string;
   showStatus?: boolean;
@@ -41,6 +41,12 @@ const statusConfig = {
   OFFLINE: "bg-gray-500",
 };
 
+const sizeStatusClasses = {
+  "3.5": "size-3.5 -bottom-0.5 -right-0.5",
+  "5": "size-5 bottom-0 right-0",
+  "6": "size-5.5 bottom-0.5 right-0.5",
+};
+
 export function UserAvatar({
   user,
   size = "md",
@@ -54,28 +60,27 @@ export function UserAvatar({
   const userStatus = (user.status as UserStatus) || UserStatus.OFFLINE;
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block w-max h-max">
       <Avatar className={cn("rounded-full", sizeClasses[size], className)}>
         <AvatarImage src={user.image || ""} alt={displayName} />
         <AvatarFallback
           className={cn(
             "rounded-full bg-blue-700 text-white font-semibold",
             fallbackSizeClasses[size],
-            fallbackClassName,
+            fallbackClassName
           )}
         >
           {initials}
         </AvatarFallback>
       </Avatar>
-
       {showStatus && (
         <div
-          className={`absolute -bottom-0.5 -right-0.5 size-${sizeStatus} rounded-full border-[3px] border-background bg-background`}
+          className={`absolute ${sizeStatusClasses[sizeStatus]} rounded-full border-[3px] border-background bg-background`}
         >
           <div
             className={cn(
               "w-full h-full rounded-full",
-              statusConfig[userStatus],
+              statusConfig[userStatus]
             )}
           />
         </div>

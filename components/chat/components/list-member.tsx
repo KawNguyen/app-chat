@@ -53,7 +53,7 @@ function MemberItem({ member }: { member: ServerMember }) {
       <UserAvatar
         user={{ ...member.user, status: userStatus }}
         size="md"
-        sizeStatus="4"
+        sizeStatus="3.5"
         showStatus
       />
 

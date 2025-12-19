@@ -2,7 +2,7 @@ import { Circle, Moon, CircleMinus } from "lucide-react";
 import { UserStatus } from "@/types";
 
 export const statusConfig: Record<
-  Exclude<UserStatus, UserStatus.OFFLINE>,
+  UserStatus,
   {
     label: string;
     description: string;
@@ -37,6 +37,13 @@ export const statusConfig: Record<
     description: "You will appear offline",
     color: "bg-gray-400",
     text: "text-gray-400",
+    icon: Circle,
+  },
+  [UserStatus.OFFLINE]: {
+    label: "Offline",
+    description: "",
+    color: "bg-gray-500",
+    text: "text-gray-500",
     icon: Circle,
   },
 };

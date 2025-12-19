@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
-import OAuthButtons from "./oauth-buttons";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
+import { Eye, EyeOff } from "lucide-react";
+import { Spinner } from "../ui/spinner";
+import { registerSchema } from "@/lib/validations/register";
+import { signUp } from "@/lib/auth-client";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,236 +36,212 @@ export default function SignUpForm() {
       }
 
       try {
-        // Sử dụng custom endpoint để xử lý username
-        const response = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: value.email,
-            password: value.password,
-            username: value.username,
-          }),
+        const result = await signUp.email({
+          email: value.email,
+          password: value.password,
+          name: value.username,
         });
 
-        const data = await response.json();
-
-        if (!response.ok || data.error) {
-          toast.error(data.error || "Sign up failed");
+        if (result.error) {
+          toast.error(result.error.message || "Sign up failed");
           return;
         }
 
         toast.success("Account created successfully!");
         router.push("/");
         router.refresh();
-      } catch {
+      } catch (error) {
+        console.error("Sign up error:", error);
         toast.error("An error occurred during sign up");
       }
     },
   });
 
   return (
-    <div className="glass-effect rounded-2xl p-8 shadow-2xl mb-6 neon-border">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit();
-        }}
-        className="space-y-6"
-      >
-        {/* Email Field */}
-        <form.Field name="email">
-          {(field) => (
-            <div className="space-y-3 animate-fade-in">
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold text-cyan-200"
-              >
-                Email Address
-              </label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+      className="space-y-6"
+    >
+      <FieldGroup>
+        <form.Field
+          name="email"
+          validators={{ onChange: registerSchema.shape.email }}
+        >
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
-                  id="email"
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                  placeholder="your@example.com"
                   type="email"
-                  placeholder="you@neon.realm"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  className="pl-12 bg-cyan-950/30 border border-cyan-600/30 hover:border-cyan-500/50 focus:border-cyan-500 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all text-white placeholder:text-cyan-300/30 h-11 rounded-lg"
                 />
-              </div>
-              {field.state.meta.errors && (
-                <p className="text-xs text-emerald-400">
-                  {field.state.meta.errors.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
+                {isInvalid ? (
+                  <FieldError>
+                    {field.state.meta.errors?.[0]?.message}
+                  </FieldError>
+                ) : null}
+              </Field>
+            );
+          }}
         </form.Field>
 
-        {/* Username Field */}
-        <form.Field name="username">
-          {(field) => (
-            <div className="space-y-3 animate-fade-in">
-              <label
-                htmlFor="username"
-                className="block text-sm font-semibold text-cyan-200"
-              >
-                Username
-              </label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
+        <form.Field
+          name="username"
+          validators={{ onChange: registerSchema.shape.name }}
+        >
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
                 <Input
-                  id="username"
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                  placeholder="Choose a username"
                   type="text"
-                  placeholder="Choose your username"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  className="pl-12 bg-purple-950/30 border border-purple-600/30 hover:border-purple-500/50 focus:border-purple-500 focus:shadow-[0_0_10px_rgba(204,102,255,0.3)] transition-all text-white placeholder:text-purple-300/30 h-11 rounded-lg"
                 />
-              </div>
-              {field.state.meta.errors && (
-                <p className="text-xs text-pink-400">
-                  {field.state.meta.errors.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
+                {isInvalid ? (
+                  <FieldError>
+                    {field.state.meta.errors?.[0]?.message}
+                  </FieldError>
+                ) : null}
+              </Field>
+            );
+          }}
         </form.Field>
 
-        {/* Password Field */}
-        <form.Field name="password">
-          {(field) => (
-            <div className="space-y-3 animate-fade-in">
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-cyan-200"
-              >
-                Password
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  className="pl-12 pr-12 bg-cyan-950/30 border border-cyan-600/30 hover:border-cyan-500/50 focus:border-cyan-500 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all text-white placeholder:text-cyan-300/30 h-11 rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-300/50 hover:text-cyan-400 transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {field.state.meta.errors && (
-                <p className="text-xs text-pink-400">
-                  {field.state.meta.errors.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-        </form.Field>
-
-        {/* Confirm Password Field */}
-        <form.Field name="confirmPassword">
-          {(field) => (
-            <div className="space-y-3 animate-fade-in">
-              <label
-                htmlFor="confirm-password"
-                className="block text-sm font-semibold text-cyan-200"
-              >
-                Confirm Password
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400/60 group-focus-within:text-cyan-400 transition-colors" />
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={field.handleBlur}
-                  className="pl-12 pr-12 bg-cyan-950/30 border border-cyan-600/30 hover:border-cyan-500/50 focus:border-cyan-500 focus:shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all text-white placeholder:text-cyan-300/30 h-11 rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-cyan-300/50 hover:text-cyan-400 transition-colors"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {field.state.meta.errors && (
-                <p className="text-xs text-pink-400">
-                  {field.state.meta.errors.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-        </form.Field>
-
-        <form.Subscribe
-          selector={(state) => [state.canSubmit, state.isSubmitting]}
+        <form.Field
+          name="password"
+          validators={{ onChange: registerSchema.shape.password }}
         >
-          {([canSubmit, isSubmitting]) => (
-            <Button
-              type="submit"
-              disabled={!canSubmit || isSubmitting}
-              className="w-full bg-linear-to-r from-cyan-600 to-emerald-600 text-white hover:from-cyan-500 hover:to-emerald-500 font-semibold h-11 rounded-lg transition-all glow-primary mt-8"
-              size="lg"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-transparent border-t-white rounded-full animate-spin"></div>
-                  Creating account...
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <div className="relative">
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="**********"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-max bg-none"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
-          )}
-        </form.Subscribe>
-      </form>
+                {isInvalid ? (
+                  <FieldError>
+                    {field.state.meta.errors?.[0]?.message}
+                  </FieldError>
+                ) : null}
+              </Field>
+            );
+          }}
+        </form.Field>
 
-      <div className="flex items-center gap-3 my-6">
-        <div className="flex-1 h-px bg-cyan-600/30"></div>
-        <span className="text-xs text-cyan-300/50 font-medium uppercase tracking-wide">
-          or
-        </span>
-        <div className="flex-1 h-px bg-cyan-600/30"></div>
-      </div>
-
-      <OAuthButtons />
-
-      <div className="flex items-center gap-3 my-6">
-        <div className="flex-1 h-px bg-cyan-600/30"></div>
-      </div>
-
-      <div className="text-center text-sm text-cyan-200/60">
-        Already have an account?{" "}
-        <Link
-          href="/sign-in"
-          className="text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 font-semibold transition-all"
+        <form.Field
+          name="confirmPassword"
+          validators={{
+            onChange: registerSchema.shape.password,
+          }}
         >
-          Sign in
-        </Link>
-      </div>
-    </div>
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
+            return (
+              <Field>
+                <FieldLabel htmlFor="confirm-password">
+                  Confirm Password
+                </FieldLabel>
+                <div className="relative">
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="**********"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-max bg-none"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {isInvalid ? (
+                  <FieldError>
+                    {field.state.meta.errors?.[0]?.message}
+                  </FieldError>
+                ) : null}
+              </Field>
+            );
+          }}
+        </form.Field>
+      </FieldGroup>
+
+      <form.Subscribe
+        selector={(state) => [state.canSubmit, state.isSubmitting]}
+      >
+        {([canSubmit, isSubmitting]) => (
+          <Button
+            type="submit"
+            disabled={!canSubmit || isSubmitting}
+            className="w-full"
+            size="lg"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Spinner />
+                Creating account...
+              </div>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        )}
+      </form.Subscribe>
+    </form>
   );
 }

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { twoFactor } from "better-auth/plugins";
 import prisma from "./prisma";
 
 export const auth = betterAuth({
@@ -20,25 +21,35 @@ export const auth = betterAuth({
   },
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"],
+  user: {
+    additionalFields: {
+      userName: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+      displayName: {
+        type: "string",
+        required: false,
+      },
+    },
+  },
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async after(ctx: any) {
       console.log("After callback - path:", ctx.path, "method:", ctx.method);
 
-      // Kiểm tra nhiều điều kiện khác nhau
-      if (ctx.method === "POST" && ctx.context?.user) {
-        const user = ctx.context.user;
-        console.log("User data:", user);
-
-        // Nếu user vừa được tạo và có name nhưng chưa có username
-        if (user.name && !user.username) {
+      // Check if this is a sign up request
+      if (ctx.path === "/sign-up/email" && ctx.method === "POST") {
+        const user = ctx.context?.user;
+        if (user && user.name) {
           console.log("Updating username and displayName for user:", user.id);
 
           try {
             await prisma.user.update({
               where: { id: user.id },
               data: {
-                userName: user.name, // name từ form signup chính là username
+                userName: user.name,
                 displayName: user.name,
               },
             });
@@ -51,4 +62,11 @@ export const auth = betterAuth({
       return ctx;
     },
   },
+  appName: "ConTalk",
+  plugins: [
+    twoFactor({
+      issuer: "ConTalk",
+      skipVerificationOnEnable: false,
+    }),
+  ],
 });

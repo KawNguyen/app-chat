@@ -15,6 +15,7 @@ import { UserCard, UserMenuItems, VoiceControls } from "./user-nav";
 
 export function NavUser({
   user,
+  logout,
 }: {
   user: {
     userName: string;
@@ -22,16 +23,16 @@ export function NavUser({
     email: string;
     image?: string;
     status?: UserStatus;
+    bio?: string;
+    banner: string;
   };
   logout: () => void;
 }) {
   const router = useRouter();
-  const [currentStatus, setCurrentStatus] = useState<
-    Exclude<UserStatus, UserStatus.OFFLINE>
-  >(
+  const [currentStatus, setCurrentStatus] = useState<UserStatus>(
     user.status && user.status !== UserStatus.OFFLINE
-      ? (user.status as Exclude<UserStatus, UserStatus.OFFLINE>)
-      : UserStatus.ONLINE,
+      ? (user.status as UserStatus)
+      : UserStatus.ONLINE
   );
 
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceControls();
@@ -60,7 +61,7 @@ export function NavUser({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-72 rounded-md p-0 mb-2 space-y-4"
+          className="w-72 rounded-md p-0 mb-2"
           side="top"
           align="start"
           sideOffset={8}
@@ -83,6 +84,7 @@ export function NavUser({
         isDeafened={isDeafened}
         onToggleMute={toggleMute}
         onToggleDeafen={toggleDeafen}
+        logout={logout}
       />
     </div>
   );

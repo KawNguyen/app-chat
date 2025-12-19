@@ -1,3 +1,5 @@
+"use client";
+
 import { Mic, MicOff, Headphones, HeadphoneOff, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,12 +9,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
+import { useState } from "react";
 
 interface VoiceControlsProps {
   isMuted: boolean;
   isDeafened: boolean;
   onToggleMute: () => void;
   onToggleDeafen: () => void;
+  logout: () => void;
 }
 
 export function VoiceControls({
@@ -20,7 +25,9 @@ export function VoiceControls({
   isDeafened,
   onToggleMute,
   onToggleDeafen,
+  logout,
 }: VoiceControlsProps) {
+  const [openDialog, setOpenDialog] = useState(false);
   return (
     <div className="flex items-center gap-0.5">
       <TooltipProvider>
@@ -34,7 +41,7 @@ export function VoiceControls({
                 "h-8 w-8",
                 isMuted
                   ? "text-destructive hover:text-destructive"
-                  : "text-muted-foreground hover:text-foreground",
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={onToggleMute}
             >
@@ -60,7 +67,7 @@ export function VoiceControls({
                 "h-8 w-8",
                 isDeafened
                   ? "text-destructive hover:text-destructive"
-                  : "text-muted-foreground hover:text-foreground",
+                  : "text-muted-foreground hover:text-foreground"
               )}
               onClick={onToggleDeafen}
             >
@@ -83,15 +90,21 @@ export function VoiceControls({
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setOpenDialog(true)}
             >
               <Settings className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>Cài đặt người dùng</p>
+            <p>User Settings</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+      <SettingsDialog
+        openDialog={openDialog}
+        setOpenDialog={setOpenDialog}
+        logout={logout}
+      />
     </div>
   );
 }
