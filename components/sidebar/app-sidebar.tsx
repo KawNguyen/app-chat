@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { NavUser } from "@/components/sidebar/nav-user";
 import { signOut } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
-import { Server, User, UserStatus } from "@/types";
+import { Server, User } from "@/types";
 import FriendList from "../direct-chat/components/friend-list";
 import { ServerList } from "./server-list";
 import { ChannelList } from "./channel-list";
@@ -19,8 +19,6 @@ function SidebarContent() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   }) as { data: User };
 
-  console.log(user);
-
   const { data: servers = [] } = trpc.server.listServerJoined.useQuery(
     undefined,
     {
@@ -30,7 +28,6 @@ function SidebarContent() {
     data: Server[];
   };
 
-  // Tính toán activeServer từ URL params
   const activeServer = serverIdFromUrl
     ? servers.find((s) => s.id === serverIdFromUrl) || null
     : null;
@@ -88,15 +85,8 @@ function SidebarContent() {
 
       <div className="px-3 pb-3">
         <NavUser
-          user={{
-            userName: user?.userName || "",
-            displayName: user?.displayName || "User",
-            email: user?.email || "",
-            image: user?.image || undefined,
-            status: user?.status as unknown as UserStatus,
-            banner: user?.banner || "",
-            bio: user?.bio || undefined,
-          }}
+          user={user}
+          hasPassword={user?.hasPassword}
           logout={handleLogout}
         />
       </div>

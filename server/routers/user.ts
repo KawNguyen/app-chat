@@ -7,9 +7,6 @@ import { observable } from "@trpc/server/observable";
 import { eventEmitter } from "../event-emitter";
 import { notifyUserStatusUpdate } from "@/lib/ws-notify";
 
-/**
- * User router - handles user-related operations
- */
 export const userRouter = router({
   /**
    * Get current user information
@@ -27,6 +24,7 @@ export const userRouter = router({
         bio: true,
         status: true,
         customStatus: true,
+        twoFactorEnabled: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -39,14 +37,25 @@ export const userRouter = router({
       });
     }
 
-    return user;
+    const hasPassword = await prisma.account.findFirst({
+      where: {
+        userId: ctx.user.id,
+        password: { not: null },
+      },
+      select: { id: true },
+    });
+
+    return {
+      ...user,
+      hasPassword: !!hasPassword,
+    };
   }),
 
   getById: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
-      }),
+      })
     )
     .query(async ({ input }) => {
       const user = await prisma.user.findUnique({
@@ -84,9 +93,9 @@ export const userRouter = router({
           .max(20, "Username cannot exceed 20 characters")
           .regex(
             /^[a-zA-Z0-9_]+$/,
-            "Username can only contain letters, numbers and underscores",
+            "Username can only contain letters, numbers and underscores"
           ),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Check if username is already in use
@@ -129,7 +138,7 @@ export const userRouter = router({
           UserStatus.DND,
           UserStatus.INVISIBLE,
         ]),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const updatedUser = await prisma.user.update({
@@ -157,13 +166,13 @@ export const userRouter = router({
     .input(
       z.object({
         userIds: z.array(z.string()), // danh sách userId muốn theo dõi
-      }),
+      })
     )
     .subscription(({ input }) => {
       return observable<{ userId: string; status: string }>((emit) => {
         const onStatus = (
           data: { userId: string; status: string } | string,
-          status?: string,
+          status?: string
         ) => {
           // Handle both formats: (userId, status) and ({ userId, status })
           const userId = typeof data === "string" ? data : data.userId;
@@ -193,7 +202,7 @@ export const userRouter = router({
         bio: z.string().max(500).optional(),
         image: z.string().url().optional().or(z.literal("")),
         banner: z.string().url().optional().or(z.literal("")),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const updatedUser = await prisma.user.update({
@@ -224,7 +233,7 @@ export const userRouter = router({
       z.object({
         query: z.string().min(1),
         limit: z.number().min(1).max(50).default(10),
-      }),
+      })
     )
     .query(async ({ input }) => {
       const users = await prisma.user.findMany({

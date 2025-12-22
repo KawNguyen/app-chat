@@ -1,15 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { User } from "@/types";
 import { Check, X } from "lucide-react";
 
 interface PendingRequest {
   id: string;
-  sender: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-  };
+  sender: User;
   createdAt: Date;
 }
 

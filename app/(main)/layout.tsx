@@ -17,7 +17,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           defaultSize={22}
           minSize={16}
           maxSize={22}
-          className="w-full"
+          className="w-full min-w-77"
         >
           <AppSidebar />
         </ResizablePanel>

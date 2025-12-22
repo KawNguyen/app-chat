@@ -6,23 +6,19 @@ import { UserAvatar } from "@/components/user-avatar";
 import { useEffect, useRef, useState } from "react";
 import { MessageItem } from "../../message-item";
 import { UserProfilePopover } from "../../user-profile-popover";
+import { User } from "@/types";
+import { DirectMessage } from "@prisma/client";
 
 interface ChatAreaProps {
   conversationId: string;
-  otherUser?: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-    status: string;
-  };
+  otherUser: User;
 }
 
 export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
   const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(
-    null,
+    null
   );
 
   const { data } = trpc.conversation.getConversationMessages.useQuery(
@@ -33,7 +29,7 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
     {
       staleTime: 10 * 1000,
       refetchOnWindowFocus: false,
-    },
+    }
   );
 
   // Mark as read mutation
@@ -66,7 +62,7 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
       if (currentConv?.lastReadAt && data?.messages) {
         // Find the last message that was read
         const lastReadMsg = data.messages.find(
-          (m) => new Date(m.createdAt) <= new Date(currentConv.lastReadAt!),
+          (m) => new Date(m.createdAt) <= new Date(currentConv.lastReadAt!)
         );
         if (lastReadMsg) {
           setLastReadMessageId(lastReadMsg.id);
@@ -81,17 +77,6 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [data]);
-
-  // trpc.conversation.onGlobalNewMessage.useSubscription(
-  //   undefined,
-  //   {
-  //     onData: () => {
-  //       utils.conversation.getConversationMessages.invalidate({
-  //         conversationId,
-  //       });
-  //     },
-  //   },
-  // );
 
   const formatTimestamp = (date: Date) => {
     return new Intl.DateTimeFormat("vi-VN", {
@@ -161,7 +146,7 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
             return (
               <div key={msg.id} className="relative">
                 {/* Unread Separator Line - Discord style */}
-                {isFirstUnread && (
+                {isFirstUnread && !(msg.senderId === currentUser?.id) && (
                   <div className="flex items-center my-2 -mx-4">
                     <div className="flex-1 h-px bg-red-500" />
                     <span className="px-2 text-xs font-semibold text-red-500">
@@ -172,7 +157,7 @@ export function ChatArea({ conversationId, otherUser }: ChatAreaProps) {
                 )}
 
                 <MessageItem
-                  message={msg}
+                  message={msg as DirectMessage}
                   currentUserId={currentUser?.id}
                   showAvatar={showAvatar}
                   formatTimestamp={formatTimestamp}

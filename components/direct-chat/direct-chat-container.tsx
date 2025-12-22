@@ -15,6 +15,7 @@ import {
 } from "../ui/resizable";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { MessageInput } from "../message-input";
+import { User } from "@/types";
 
 interface DirectChatContainerProps {
   conversationId: string;
@@ -38,14 +39,14 @@ export default function DirectChatContainer({
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
       refetchOnWindowFocus: false,
-    },
+    }
   );
 
   // Get other user from conversation
   const { data: currentUser } = trpc.user.me.useQuery();
   const otherUser = conversation?.participants.find(
-    (p) => p.userId !== currentUser?.id,
-  )?.user;
+    (p) => p.userId !== currentUser?.id
+  )?.user as User;
 
   const displayName = otherUser?.displayName || otherUser?.userName || "User";
 
@@ -56,7 +57,9 @@ export default function DirectChatContainer({
         {/* Header */}
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 bg-background shadow-sm">
           <div className="flex items-center gap-3">
-            {otherUser && <UserAvatar user={otherUser} size="sm" showStatus />}
+            {otherUser && (
+              <UserAvatar user={otherUser as User} size="sm" showStatus />
+            )}
             <div>
               <h1 className="text-base font-semibold">{displayName}</h1>
             </div>

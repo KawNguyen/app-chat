@@ -6,12 +6,14 @@ import { trpc } from "@/lib/trpc/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useUserStatus } from "@/providers/user-status-provider";
-import { UserStatus } from "@/types";
-import { FriendsHeader } from "./friends-list/friends-header";
-import { SearchBar } from "./friends-list/search-bar";
-import { PendingRequestsList } from "./friends-list/pending-requests-list";
-import { FriendsListSection } from "./friends-list/friends-list-section";
+import { User, UserStatus } from "@/types";
+import { SearchBar } from "../search-bar";
 import type { TabType, Friend } from "./friends-list/types";
+import {
+  FriendsHeader,
+  FriendsListSection,
+  PendingRequestsList,
+} from "./friends-list";
 
 export function FriendsListClient() {
   const [activeTab, setActiveTab] = useState<TabType>("online");
@@ -21,7 +23,13 @@ export function FriendsListClient() {
 
   const { data: friends = [] } = trpc.friend.listFriends.useQuery();
   const { data: pendingRequests = [] } =
-    trpc.friend.listPendingRequests.useQuery();
+    trpc.friend.listPendingRequests.useQuery() as {
+      data: {
+        id: string;
+        sender: User;
+        createdAt: Date;
+      }[];
+    };
   const utils = trpc.useUtils();
 
   // Initialize global status cho friends
@@ -100,7 +108,7 @@ export function FriendsListClient() {
   });
 
   // Filter friends based on active tab using global status
-  const filteredFriends = (friends as Friend[]).filter((friend) => {
+  const filteredFriends = (friends as User[]).filter((friend) => {
     const matchesSearch =
       friend.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       friend.userName?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -127,7 +135,7 @@ export function FriendsListClient() {
         pendingRequestsCount={pendingRequests.length}
       />
 
-      <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      <SearchBar className="px-4 pt-4" value={searchQuery} onChange={setSearchQuery} />
 
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">

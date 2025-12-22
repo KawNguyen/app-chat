@@ -10,17 +10,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ReactNode } from "react";
-
-interface MessageUser {
-  id: string;
-  userName: string | null;
-  displayName: string | null;
-  image: string | null;
-  status: string;
-}
+import { User } from "@/types";
 
 interface UserProfilePopoverProps {
-  user: MessageUser;
+  user: User;
   displayName: string;
   children: ReactNode;
   side?: "top" | "right" | "bottom" | "left";

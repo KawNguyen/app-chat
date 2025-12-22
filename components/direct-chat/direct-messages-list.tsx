@@ -9,29 +9,7 @@ import { setLastDMConversation } from "@/lib/utils/server-cache";
 import { useUserStatus } from "@/providers/user-status-provider";
 import { UserStatus } from "@/types";
 import { useEffect } from "react";
-
-interface Conversation {
-  id: string;
-  otherUser: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-    status: string;
-  };
-  lastMessage?: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    conversationId: string;
-    content: string;
-    senderId: string;
-    isEdited: boolean;
-  };
-  updatedAt: Date;
-  unreadCount?: number;
-  lastReadAt?: Date | null;
-}
+import { Conversation } from "./components/friend-list";
 
 interface DirectMessagesListProps {
   conversations: Conversation[];
@@ -87,7 +65,7 @@ function DirectMessagesList({
                   "flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#202022] transition-colors group relative",
                   activeConversationId === conv.id
                     ? "bg-[#202022] text-white  hover:bg-[#131314]"
-                    : "text-[#b5bac1] hover:text-white",
+                    : "text-[#b5bac1] hover:text-white"
                 )}
                 onClick={() => {
                   onConversationSelect(conv.id);
@@ -112,7 +90,7 @@ function DirectMessagesList({
                   <span
                     className={cn(
                       "text-sm truncate flex-1",
-                      hasUnread ? "font-bold text-white" : "font-medium",
+                      hasUnread ? "font-bold text-white" : "font-medium"
                     )}
                   >
                     {conv.otherUser?.displayName || conv.otherUser?.userName}

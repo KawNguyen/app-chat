@@ -10,9 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { authClient, useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { SetPasswordForm } from "./set-password-form";
 import { trpc } from "@/lib/trpc/react";
 import { CheckCircle2 } from "lucide-react";
+import { SetPasswordDialog } from "./set-password-dialog";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
@@ -152,7 +152,7 @@ export function TwoFactorSetup({
   if (showSetPassword && !hasPassword) {
     return (
       <div className="space-y-4">
-        <SetPasswordForm onSuccess={handlePasswordSet} />
+        <SetPasswordDialog onSuccess={handlePasswordSet} />
         <Button
           variant="outline"
           onClick={() => setShowSetPassword(false)}

@@ -1,23 +1,22 @@
-import { UserStatus } from "@/types";
+import { User } from "@/types";
 import { UserAvatar } from "@/components/user-avatar";
 
 interface UserCardProps {
-  user: {
-    userName: string;
-    displayName: string;
-    email: string;
-    image?: string;
-    status?: UserStatus;
-    bio?: string;
-    banner: string;
-  };
+  user: User;
+  showBio?: boolean;
 }
 
-export function UserCard({ user }: UserCardProps) {
+export function UserCard({ user, showBio }: UserCardProps) {
   return (
     <div className="rounded-t-md bg-card mb-2">
-      <div className={`h-28 w-full relative flex items-start gap-3 ${user.banner} mb-14`}>
-        <div className={`h-full w-full ${user.banner ? user.banner : `bg-blue-700`}`}></div>
+      <div
+        className={`h-28 w-full relative flex items-start gap-3 ${user.banner} mb-14`}
+      >
+        <div
+          className={`h-full w-full ${
+            user.banner ? user.banner : `bg-blue-700`
+          }`}
+        ></div>
         <div className="absolute -bottom-12 left-4 h-max w-max rounded-full border-4 border-card">
           <UserAvatar user={{ ...user }} size="xl" sizeStatus="5" showStatus />
         </div>
@@ -36,7 +35,7 @@ export function UserCard({ user }: UserCardProps) {
       </div>
 
       {/* Custom Status */}
-      {user.bio && (
+      {user.bio && showBio && (
         <div
           className={`mt-2 mx-4 text-xs text-muted-foreground italic whitespace-pre-line`}
         >

@@ -9,28 +9,22 @@ import {
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { useVoiceControls } from "@/hooks/use-voice-controls";
-import { UserStatus } from "@/types";
+import { User, UserStatus } from "@/types";
 import { useState } from "react";
 import { UserCard, UserMenuItems, VoiceControls } from "./user-nav";
 
 export function NavUser({
   user,
+  hasPassword,
   logout,
 }: {
-  user: {
-    userName: string;
-    displayName: string;
-    email: string;
-    image?: string;
-    status?: UserStatus;
-    bio?: string;
-    banner: string;
-  };
+  user: User;
+  hasPassword: boolean;
   logout: () => void;
 }) {
   const router = useRouter();
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(
-    user.status && user.status !== UserStatus.OFFLINE
+    user?.status && user?.status !== UserStatus.OFFLINE
       ? (user.status as UserStatus)
       : UserStatus.ONLINE
   );
@@ -52,10 +46,10 @@ export function NavUser({
             <UserAvatar user={user} size="sm" showStatus />
             <div className="flex-1 text-left overflow-hidden">
               <div className="text-xs font-semibold text-foreground truncate">
-                {user.displayName ? user.displayName : user.userName}
+                {user?.displayName || user?.userName}
               </div>
               <div className="text-[10px] text-muted-foreground truncate">
-                #{user.userName}
+                {user?.userName}
               </div>
             </div>
           </Button>
@@ -84,7 +78,9 @@ export function NavUser({
         isDeafened={isDeafened}
         onToggleMute={toggleMute}
         onToggleDeafen={toggleDeafen}
+        user={user}
         logout={logout}
+        hasPassword={hasPassword}
       />
     </div>
   );

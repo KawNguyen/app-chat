@@ -1,13 +1,9 @@
+import { User } from "@/types";
 import { PendingRequestItem } from "./pending-request-item";
 
 interface PendingRequest {
   id: string;
-  sender: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-  };
+  sender: User;
   createdAt: Date;
 }
 

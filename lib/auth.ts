@@ -39,7 +39,7 @@ export const auth = betterAuth({
     async after(ctx: any) {
       console.log("After callback - path:", ctx.path, "method:", ctx.method);
 
-      // Check if this is a sign up request
+      // Check if this is a sign up request (email)
       if (ctx.path === "/sign-up/email" && ctx.method === "POST") {
         const user = ctx.context?.user;
         if (user && user.name) {
@@ -59,6 +59,7 @@ export const auth = betterAuth({
           }
         }
       }
+
       return ctx;
     },
   },

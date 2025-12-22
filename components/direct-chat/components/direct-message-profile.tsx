@@ -9,15 +9,10 @@ import { Phone, Video, Users, ChevronRight, Volume2, Bell } from "lucide-react";
 import { useUserStatus } from "@/providers/user-status-provider";
 import { trpc } from "@/lib/trpc/react";
 import FriendAction from "@/components/drop-down-menu/friend-action";
+import { User } from "@/types";
 
 interface DirectMessageProfileProps {
-  user: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-    status: string;
-  };
+  user: User;
   conversationId: string;
 }
 
@@ -35,7 +30,7 @@ export function DirectMessageProfile({
   const { data: conversationData } =
     trpc.conversation.getConversationById.useQuery(
       { conversationId },
-      { enabled: !!conversationId },
+      { enabled: !!conversationId }
     );
 
   const isFriend = conversationData?.isFriend ?? false;

@@ -11,13 +11,16 @@ import {
 import { cn } from "@/lib/utils";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
 import { useState } from "react";
+import { User } from "@/types";
 
 interface VoiceControlsProps {
   isMuted: boolean;
   isDeafened: boolean;
   onToggleMute: () => void;
   onToggleDeafen: () => void;
+  user: User;
   logout: () => void;
+  hasPassword: boolean;
 }
 
 export function VoiceControls({
@@ -25,7 +28,9 @@ export function VoiceControls({
   isDeafened,
   onToggleMute,
   onToggleDeafen,
+  user,
   logout,
+  hasPassword,
 }: VoiceControlsProps) {
   const [openDialog, setOpenDialog] = useState(false);
   return (
@@ -101,8 +106,10 @@ export function VoiceControls({
         </Tooltip>
       </TooltipProvider>
       <SettingsDialog
+        hasPassword={hasPassword}
         openDialog={openDialog}
         setOpenDialog={setOpenDialog}
+        user={user}
         logout={logout}
       />
     </div>

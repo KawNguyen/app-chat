@@ -4,6 +4,7 @@ import { ScrollArea } from "../../ui/scroll-area";
 import { trpc } from "@/lib/trpc/react";
 import { useRef, useEffect } from "react";
 import { MessageItem } from "../../message-item";
+import { Message } from "@/types";
 
 interface ChatAreaProps {
   channelId: string;
@@ -21,7 +22,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
     {
       staleTime: 30 * 1000, // 30 seconds
       refetchOnWindowFocus: false,
-    },
+    }
   );
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
       onData: () => {
         utils.message.getMessages.invalidate({ channelId, limit: 50 });
       },
-    },
+    }
   );
 
   const formatTimestamp = (date: Date) => {
@@ -66,7 +67,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
             return (
               <MessageItem
                 key={msg.id}
-                message={msg}
+                message={msg as Message}
                 currentUserId={currentUser?.id}
                 showAvatar={showAvatar}
                 formatTimestamp={formatTimestamp}

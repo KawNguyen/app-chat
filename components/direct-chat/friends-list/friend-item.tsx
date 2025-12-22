@@ -1,18 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { User } from "@/types";
 import { MessageCircle, MoreVertical } from "lucide-react";
 
-interface Friend {
-  id: string;
-  userName: string | null;
-  displayName: string | null;
-  image: string | null;
-  status: string;
-  customStatus?: string | null;
-}
-
 interface FriendItemProps {
-  friend: Friend;
+  friend: User;
   currentStatus: string;
   onMessage: () => void;
   isCreatingConversation: boolean;
@@ -29,11 +21,7 @@ export const FriendItem = ({
     className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-secondary/50 transition-colors border border-transparent hover:border-border group"
   >
     <div className="flex items-center gap-3 flex-1 min-w-0">
-      <UserAvatar
-        user={{ ...friend, status: currentStatus }}
-        size="md"
-        showStatus
-      />
+      <UserAvatar user={friend} size="md" showStatus />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate">
           {friend.displayName || friend.userName}

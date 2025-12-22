@@ -1,154 +1,84 @@
 "use client";
 
-import {
-  Bell,
-  Check,
-  Globe,
-  Home,
-  Keyboard,
-  Link,
-  Lock,
-  LogOut,
-  Menu,
-  MessageCircle,
-  Paintbrush,
-  Shield,
-  Video,
-  X,
-} from "lucide-react";
+import { Shield, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { TwoFactorSetup } from "./two-factor-setup";
-import { SetPasswordForm } from "./set-password-form";
-import { useSession } from "@/lib/auth-client";
-import { trpc } from "@/lib/trpc/react";
-import { cn } from "@/lib/utils";
+import { Header, Sidebar } from "./components";
+import type { User } from "@/types";
+import { MyAccount } from "./my-account/my-account";
 
 const nav = [
-  { name: "Notifications", icon: Bell },
-  { name: "Navigation", icon: Menu },
-  { name: "Home", icon: Home },
-  { name: "Appearance", icon: Paintbrush },
-  { name: "Messages & media", icon: MessageCircle },
-  { name: "Language & region", icon: Globe },
-  { name: "Accessibility", icon: Keyboard },
-  { name: "Mark as read", icon: Check },
-  { name: "Audio & video", icon: Video },
-  { name: "Connected accounts", icon: Link },
-  { name: "Privacy & visibility", icon: Lock },
-  { name: "Security", icon: Shield },
-  { name: "Two-Factor Auth", icon: Shield },
+  { key: "profiles", label: "Profiles", icon: UserIcon },
+  { key: "account", label: "My Account", icon: UserIcon },
+  { key: "security", label: "Security", icon: Shield },
+  { key: "two-factor", label: "Two-Factor Auth", icon: Shield },
 ];
+
+type SectionKey = "profiles" | "account" | "security" | "two-factor";
 
 interface SettingsDialogProps {
   openDialog?: boolean;
   setOpenDialog?: (open: boolean) => void;
+  user: User;
   logout: () => void;
+  hasPassword?: boolean;
 }
 
 export function SettingsDialog({
   openDialog,
   setOpenDialog,
+  user,
   logout,
+  hasPassword,
 }: SettingsDialogProps) {
-  const [activeSection, setActiveSection] = useState("Two-Factor Auth");
-  const { data: session, refetch } = useSession();
-  const utils = trpc.useUtils();
+  const [activeSection, setActiveSection] = useState<SectionKey>("account");
 
-  const { data: passwordStatus } = trpc.auth.checkPassword.useQuery(undefined, {
-    enabled: openDialog === true,
-  });
-
+  const sectionMap: Record<SectionKey, React.ReactNode> = {
+    "profiles": null,
+    account: <MyAccount user={user} hasPassword={hasPassword} />,
+    security: null,
+    "two-factor": null,
+  };
+  const activeNav = nav.find((n) => n.key === activeSection);
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <DialogContent className="p-0 w-260 h-200" showCloseButton={false}>
+      <DialogContent className="p-0 w-[1320px] h-220" showCloseButton={false}>
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <DialogDescription className="sr-only">
           Customize your settings here.
         </DialogDescription>
 
         <div className="flex h-full w-full overflow-hidden">
-          <aside className="hidden md:flex w-64 border-r bg-muted/30 flex-col">
-            <div className="flex-1 overflow-y-auto p-2">
-              <nav className="space-y-1">
-                {nav.map((item) => {
-                  const Icon = item.icon;
-                  const active = item.name === activeSection;
-                  return (
-                    <button
-                      key={item.name}
-                      onClick={() => setActiveSection(item.name)}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition",
-                        active
-                          ? "bg-muted font-medium"
-                          : "hover:bg-muted/60 text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+          <Sidebar
+            nav={nav}
+            activeSection={activeSection}
+            setActiveSection={(section: string) =>
+              setActiveSection(section as SectionKey)
+            }
+            user={user}
+            logout={logout}
+          />
 
-            <div className="border-t p-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2"
-                onClick={logout}
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </div>
-          </aside>
+          <main className="w-full flex flex-1 flex-col">
+            <Header activeSection={activeNav?.label ?? ""} />
 
-          <main className="flex flex-1 flex-col min-w-0">
-            <header className="h-10 shrink-0 flex items-center px-4 border-b">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">Settings</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{activeSection}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-              <DialogClose className="ml-auto text-muted-foreground hover:text-foreground">
-                <X className="size-5" />
-              </DialogClose>
-            </header>
-
-            <div className="flex flex-1 min-h-0">
-              <ScrollArea className="h-full w-full p-4">
-                {activeSection === "Two-Factor Auth" ? (
+            <div className="w-full flex min-h-0">
+              <ScrollArea className="h-full w-full">
+                {/* {activeSection === "two-factor" ? (
                   <TwoFactorSetup
                     isEnabled={session?.user?.twoFactorEnabled ?? false}
                     onStatusChange={() => refetch()}
                   />
-                ) : activeSection === "Security" ? (
+                ) : activeSection === "security" ? (
                   <div className="space-y-4">
                     <SetPasswordForm
                       hasPassword={passwordStatus?.hasPassword ?? false}
@@ -167,7 +97,10 @@ export function SettingsDialog({
                       />
                     ))}
                   </div>
-                )}
+                )} */}
+                <main className="flex justify-center pt-10">
+                  {sectionMap[activeSection as SectionKey]}
+                </main>
               </ScrollArea>
             </div>
           </main>

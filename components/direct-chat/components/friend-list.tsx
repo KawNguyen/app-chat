@@ -8,19 +8,27 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserStatus } from "@/providers/user-status-provider";
-import { UserStatus } from "@/types";
+import { User, UserStatus } from "@/types";
 
 const DirectMessagesList = lazy(
-  () => import("@/components/direct-chat/direct-messages-list"),
+  () => import("@/components/direct-chat/direct-messages-list")
 );
 
-interface Friend {
+export interface Conversation {
   id: string;
-  userName: string | null;
-  displayName: string | null;
-  image: string | null;
-  status: string;
-  customStatus?: string | null;
+  otherUser: User;
+  lastMessage?: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    conversationId: string;
+    content: string;
+    senderId: string;
+    isEdited: boolean;
+  };
+  updatedAt: Date;
+  unreadCount?: number;
+  lastReadAt?: Date | null;
 }
 
 interface FriendListProps {
@@ -38,7 +46,7 @@ function FriendList({
   const { data: conversations = [] } =
     trpc.conversation.listConversations.useQuery(undefined, {
       staleTime: 60 * 1000, // 1 minute
-    });
+    }) as { data: Conversation[] };
   const { data: friends = [] } = trpc.friend.listFriends.useQuery(undefined, {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -46,7 +54,7 @@ function FriendList({
   // Initialize global status cho friends
   useEffect(() => {
     if (friends && friends.length > 0) {
-      const statuses = (friends as Friend[]).map((f) => ({
+      const statuses = (friends as User[]).map((f) => ({
         userId: f.id,
         status: f.status as UserStatus,
       }));
@@ -55,11 +63,11 @@ function FriendList({
   }, [friends, setMultipleStatuses]);
 
   // Get frequent friends với status từ global provider
-  const frequentFriends = ((friends as Friend[])?.slice(0, 5) || []).map(
+  const frequentFriends = ((friends as User[])?.slice(0, 5) || []).map(
     (friend) => ({
       ...friend,
       status: getUserStatus(friend.id) || friend.status,
-    }),
+    })
   );
 
   return (
@@ -121,22 +129,14 @@ function FriendList({
             <HelpCircle className="h-3.5 w-3.5 text-[#949ba4]" />
           </div>
           <div className="flex gap-2">
-            {frequentFriends.map(
-              (friend: {
-                id: string;
-                userName: string | null;
-                displayName: string | null;
-                image: string | null;
-                status: string;
-              }) => (
-                <div
-                  key={friend.id}
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                >
-                  <UserAvatar user={friend} size="md" showStatus />
-                </div>
-              ),
-            )}
+            {frequentFriends.map((friend: User) => (
+              <div
+                key={friend.id}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <UserAvatar user={friend} size="md" showStatus />
+              </div>
+            ))}
           </div>
         </div>
       )}

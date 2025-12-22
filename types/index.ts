@@ -61,6 +61,8 @@ export interface User {
   bio: string | null;
   status: UserStatus;
   customStatus: string | null;
+  hasPassword: boolean;
+  twoFactorEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -153,6 +155,7 @@ export interface Member {
   joinedAt: Date;
   isMuted: boolean;
   isDeafened: boolean;
+  user: User;
 }
 
 export interface Role {
@@ -203,6 +206,11 @@ export interface Message {
   replyToId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  attachments?: Attachment[];
+  embeds?: Embed[];
+  reactions?: Reaction[];
+  mentions?: Mention[];
+  member: Member;
 }
 
 export interface Attachment {
@@ -249,8 +257,11 @@ export interface Conversation {
   isGroup: boolean;
   name: string | null;
   icon: string | null;
-  createdAt: Date;
   updatedAt: Date;
+  createdAt: Date;
+
+  participants: ConversationParticipant[];
+  messages?: DirectMessage;
 }
 
 export interface ConversationParticipant {
@@ -260,6 +271,9 @@ export interface ConversationParticipant {
   isHidden: boolean;
   joinedAt: Date;
   lastReadAt: Date | null;
+
+  user: User;
+  conversation: Conversation;
 }
 
 export interface DirectMessage {

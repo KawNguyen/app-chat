@@ -6,7 +6,7 @@ import { UserAvatar } from "./user-avatar";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { playSound } from "@/lib/sound-effect";
-// import { useEffect } from "react";
+import { User } from "@/types";
 
 export function DirectMessageListener() {
   const utils = trpc.useUtils();
@@ -39,7 +39,7 @@ export function DirectMessageListener() {
       if (previousMessages && message.sender) {
         // Check if message already exists (avoid duplicates)
         const messageExists = previousMessages.messages.some(
-          (m) => m.id === message.id,
+          (m) => m.id === message.id
         );
         if (!messageExists) {
           // Add message to cache with proper structure
@@ -56,7 +56,7 @@ export function DirectMessageListener() {
                 ...previousMessages.messages,
                 messageWithAttachments,
               ] as typeof previousMessages.messages,
-            },
+            }
           );
         }
       } else if (isViewingConversation) {
@@ -88,7 +88,7 @@ export function DirectMessageListener() {
         });
         utils.conversation.listConversations.setData(
           undefined,
-          updatedConversations,
+          updatedConversations
         );
       } else {
         // Only invalidate if no cache exists
@@ -127,7 +127,11 @@ export function DirectMessageListener() {
             }}
           >
             {message.sender && (
-              <UserAvatar user={message.sender} size="sm" showStatus={false} />
+              <UserAvatar
+                user={message.sender as User}
+                size="sm"
+                showStatus={false}
+              />
             )}
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">{senderName}</div>
@@ -139,7 +143,7 @@ export function DirectMessageListener() {
           {
             duration: 4000,
             className: "cursor-pointer hover:bg-accent",
-          },
+          }
         );
         console.log("📬 Toast shown with ID:", toastId);
       }

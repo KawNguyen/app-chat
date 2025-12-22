@@ -6,17 +6,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-
-interface MessageUser {
-  id: string;
-  userName: string | null;
-  displayName: string | null;
-  image: string | null;
-  status: string;
-}
+import { User } from "@/types";
 
 interface UserProfileDialogProps {
-  user: MessageUser;
+  user: User;
   displayName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;

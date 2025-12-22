@@ -1,16 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { UserStatus } from "@/types";
+import { User, UserStatus } from "@/types";
 
 interface UserAvatarProps {
-  user: {
-    name?: string | null;
-    username?: string | null;
-    displayName?: string | null;
-    image?: string | null;
-    status?: string | UserStatus;
-  };
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  user: User;
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
   sizeStatus?: "3.5" | "5" | "6";
   className?: string;
   fallbackClassName?: string;
@@ -21,8 +15,10 @@ const sizeClasses = {
   xs: "h-6 w-6",
   sm: "h-8 w-8",
   md: "h-10 w-10",
-  lg: "h-16 w-16",
-  xl: "h-20 w-20",
+  lg: "h-12 w-12",
+  xl: "h-14 w-14",
+  "2xl": "h-18 w-18",
+  "3xl": "h-22 w-22",
 };
 
 const fallbackSizeClasses = {
@@ -31,6 +27,8 @@ const fallbackSizeClasses = {
   md: "text-sm",
   lg: "text-lg",
   xl: "text-xl",
+  "2xl": "text-2xl",
+  "3xl": "text-3xl",
 };
 
 const statusConfig = {
@@ -55,14 +53,14 @@ export function UserAvatar({
   fallbackClassName,
   showStatus = false,
 }: UserAvatarProps) {
-  const displayName = user.displayName || user.username || user.name || "U";
+  const displayName = user?.displayName || user?.userName || "U";
   const initials = displayName.slice(0, 2).toUpperCase();
-  const userStatus = (user.status as UserStatus) || UserStatus.OFFLINE;
+  const userStatus = (user?.status as UserStatus) || UserStatus.OFFLINE;
 
   return (
     <div className="relative inline-block w-max h-max">
       <Avatar className={cn("rounded-full", sizeClasses[size], className)}>
-        <AvatarImage src={user.image || ""} alt={displayName} />
+        <AvatarImage src={user?.image || ""} alt={displayName} />
         <AvatarFallback
           className={cn(
             "rounded-full bg-blue-700 text-white font-semibold",
