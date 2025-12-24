@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { authClient, useSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { trpc } from "@/lib/trpc/react";
 import { CheckCircle2 } from "lucide-react";
-import { SetPasswordDialog } from "./set-password-dialog";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
   onStatusChange: () => void;
+  hasPassword?: boolean;
 }
 
 export function TwoFactorSetup({
   isEnabled,
   onStatusChange,
+  hasPassword = true,
 }: TwoFactorSetupProps) {
   const [qrCode, setQrCode] = useState<string>("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -30,40 +30,15 @@ export function TwoFactorSetup({
   const [isLoading, setIsLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [hasPassword, setHasPassword] = useState(true);
-  const [showSetPassword, setShowSetPassword] = useState(false);
   const [showDisablePrompt, setShowDisablePrompt] = useState(false);
   const [disablePassword, setDisablePassword] = useState("");
 
-  const { data: session } = useSession();
-  const utils = trpc.useUtils();
-
-  const { data: passwordStatus } = trpc.auth.checkPassword.useQuery(undefined, {
-    enabled: !!session?.user,
-  });
-
-  useEffect(() => {
-    if (passwordStatus) {
-      setHasPassword(passwordStatus.hasPassword);
-    }
-  }, [passwordStatus]);
-
   const handleEnableTwoFactor = async () => {
     if (!hasPassword) {
-      setShowSetPassword(true);
-    } else {
-      setShowPasswordPrompt(true);
+      toast.error("You need to set a password before enabling 2FA");
+      return;
     }
-  };
-
-  const handlePasswordSet = async () => {
-    await utils.auth.checkPassword.invalidate();
-    const result = await utils.auth.checkPassword.fetch();
-    if (result.hasPassword) {
-      setHasPassword(true);
-      setShowSetPassword(false);
-      setShowPasswordPrompt(true);
-    }
+    setShowPasswordPrompt(true);
   };
 
   const handleEnableWithPassword = async () => {
@@ -101,9 +76,7 @@ export function TwoFactorSetup({
 
     setIsLoading(true);
     try {
-      await authClient.twoFactor.verifyTotp({
-        code: verificationCode,
-      });
+      await authClient.twoFactor.verifyTotp({ code: verificationCode });
 
       toast.success("2FA enabled successfully!");
       setShowSetup(false);
@@ -126,9 +99,7 @@ export function TwoFactorSetup({
 
     setIsLoading(true);
     try {
-      await authClient.twoFactor.disable({
-        password: disablePassword,
-      });
+      await authClient.twoFactor.disable({ password: disablePassword });
 
       toast.success("2FA disabled");
       setShowDisablePrompt(false);
@@ -147,22 +118,6 @@ export function TwoFactorSetup({
     navigator.clipboard.writeText(backupCodes.join("\n"));
     toast.success("Backup codes copied");
   };
-
-  // Set password first
-  if (showSetPassword && !hasPassword) {
-    return (
-      <div className="space-y-4">
-        <SetPasswordDialog onSuccess={handlePasswordSet} />
-        <Button
-          variant="outline"
-          onClick={() => setShowSetPassword(false)}
-          className="w-full"
-        >
-          Cancel
-        </Button>
-      </div>
-    );
-  }
 
   // Password prompt
   if (showPasswordPrompt && !isEnabled) {
@@ -229,8 +184,11 @@ export function TwoFactorSetup({
           </Alert>
         )}
 
-        <Button onClick={handleEnableTwoFactor} disabled={isLoading}>
-          {!hasPassword ? "Set Password & Enable 2FA" : "Enable 2FA"}
+        <Button
+          onClick={handleEnableTwoFactor}
+          disabled={!hasPassword || isLoading}
+        >
+          {!hasPassword ? "Set a password first" : "Enable 2FA"}
         </Button>
       </div>
     );

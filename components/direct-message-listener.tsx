@@ -4,23 +4,16 @@ import { trpc } from "@/lib/trpc/react";
 import { toast } from "sonner";
 import { UserAvatar } from "./user-avatar";
 import { useRouter, usePathname } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
 import { playSound } from "@/lib/sound-effect";
 import { User } from "@/types";
+import { useCurrentUser } from "@/providers/user-provider";
 
 export function DirectMessageListener() {
   const utils = trpc.useUtils();
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const currentUserId = session?.user?.id;
-
-  // useEffect(() => {
-  //   console.log("DirectMessageListener mounted");
-  //   console.log("Current user ID:", currentUserId);
-  //   console.log("Current pathname:", pathname);
-  //   console.log("Session:", session);
-  // }, [currentUserId, pathname, session]);
+  const { user } = useCurrentUser();
+  const currentUserId = user?.id;
 
   trpc.conversation.onGlobalNewMessage.useSubscription(undefined, {
     onData(data) {

@@ -53,7 +53,7 @@ export function DirectMessageProfile({
                     user={{ ...user, status: currentStatus }}
                     size="xl"
                     showStatus
-                    sizeStatus="6"
+                    sizeStatus="4"
                   />
                 </div>
               </div>

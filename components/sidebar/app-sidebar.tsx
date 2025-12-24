@@ -9,16 +9,13 @@ import { Server, User } from "@/types";
 import FriendList from "../direct-chat/components/friend-list";
 import { ServerList } from "./server-list";
 import { ChannelList } from "./channel-list";
+import { useCurrentUser } from "@/providers/user-provider";
 
 function SidebarContent() {
   const params = useParams();
   const serverIdFromUrl = params?.serverId as string | undefined;
   const router = useRouter();
-
-  const { data: user } = trpc.user.me.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  }) as { data: User };
-
+  const { user } = useCurrentUser();
   const { data: servers = [] } = trpc.server.listServerJoined.useQuery(
     undefined,
     {
@@ -86,7 +83,7 @@ function SidebarContent() {
       <div className="px-3 pb-3">
         <NavUser
           user={user}
-          hasPassword={user?.hasPassword}
+          hasPassword={(user as User & { hasPassword: boolean })?.hasPassword}
           logout={handleLogout}
         />
       </div>

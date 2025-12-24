@@ -29,12 +29,12 @@ export function InviteDialog({ serverId, serverName }: InviteDialogProps) {
 
   const { data: inviteCode } = trpc.server.getInviteCode.useQuery(
     { serverId },
-    { enabled: open },
+    { enabled: open }
   );
 
   const { data: searchResults } = trpc.user.search.useQuery(
     { query: searchQuery, limit: 5 },
-    { enabled: searchQuery.length >= 2 },
+    { enabled: searchQuery.length >= 2 }
   );
 
   const inviteUser = trpc.server.inviteUser.useMutation({
@@ -76,7 +76,6 @@ export function InviteDialog({ serverId, serverName }: InviteDialogProps) {
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
           <UserPlus className="h-4 w-4" />
-          Invite
         </Button>
       </DialogTrigger>
 

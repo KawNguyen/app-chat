@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface MyAccountProps {
-  user: User & { twoFactorEnabled: boolean };
+  user: User;
   hasPassword?: boolean;
 }
 
@@ -47,6 +47,7 @@ export function MyAccount({ user, hasPassword }: MyAccountProps) {
 
         <TwoFactorDialog
           isEnabled={user?.twoFactorEnabled}
+          hasPassword={hasPassword}
           onStatusChange={async () => {
             await utils.user.me.invalidate();
           }}

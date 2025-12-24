@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, User as UserIcon } from "lucide-react";
+import { User as UserIcon } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -19,11 +19,9 @@ import { MyAccount } from "./my-account/my-account";
 const nav = [
   { key: "profiles", label: "Profiles", icon: UserIcon },
   { key: "account", label: "My Account", icon: UserIcon },
-  { key: "security", label: "Security", icon: Shield },
-  { key: "two-factor", label: "Two-Factor Auth", icon: Shield },
 ];
 
-type SectionKey = "profiles" | "account" | "security" | "two-factor";
+type SectionKey = "profiles" | "account";
 
 interface SettingsDialogProps {
   openDialog?: boolean;
@@ -43,10 +41,8 @@ export function SettingsDialog({
   const [activeSection, setActiveSection] = useState<SectionKey>("account");
 
   const sectionMap: Record<SectionKey, React.ReactNode> = {
-    "profiles": null,
+    profiles: null,
     account: <MyAccount user={user} hasPassword={hasPassword} />,
-    security: null,
-    "two-factor": null,
   };
   const activeNav = nav.find((n) => n.key === activeSection);
   return (

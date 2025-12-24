@@ -11,10 +11,6 @@ const Page = async ({
 
   const channel = await prisma.channel.findUnique({
     where: { id: channelId, serverId: serverId },
-    select: {
-      id: true,
-      name: true,
-    },
   });
 
   if (!channel) {

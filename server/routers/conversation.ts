@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { observable } from "@trpc/server/observable";
 import { eventEmitter } from "../event-emitter";
-import { DirectMessage } from "@/types";
+import type { DirectMessage, UserStatus } from "@/types";
 import { notifyNewDirectMessage } from "@/lib/ws-notify";
 
 export const conversationRouter = router({
@@ -15,7 +15,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -167,7 +167,7 @@ export const conversationRouter = router({
           lastReadAt,
           unreadCount,
         };
-      }),
+      })
     );
 
     return conversationsWithFriendStatus;
@@ -180,7 +180,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         otherUserId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Validate other user exists
@@ -277,7 +277,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const conversation = await prisma.conversation.findFirst({
@@ -315,7 +315,7 @@ export const conversationRouter = router({
 
       // Get the other user (for DM conversations)
       const otherParticipant = conversation.participants.find(
-        (p) => p.userId !== ctx.user.id,
+        (p) => p.userId !== ctx.user.id
       );
       const otherUserId = otherParticipant?.user?.id;
 
@@ -373,7 +373,7 @@ export const conversationRouter = router({
         conversationId: z.string(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -401,6 +401,7 @@ export const conversationRouter = router({
         },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
+        skip: input.cursor ? 1 : 0,
         orderBy: {
           createdAt: "desc",
         },
@@ -438,7 +439,7 @@ export const conversationRouter = router({
       z.object({
         conversationId: z.string(),
         content: z.string().min(1).max(2000),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -467,15 +468,7 @@ export const conversationRouter = router({
           senderId: ctx.user.id,
         },
         include: {
-          sender: {
-            select: {
-              id: true,
-              userName: true,
-              displayName: true,
-              image: true,
-              status: true,
-            },
-          },
+          sender: true,
           attachments: true,
         },
       });
@@ -495,15 +488,10 @@ export const conversationRouter = router({
         isEdited: message.isEdited,
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
-        sender: message.sender
-          ? {
-              id: message.sender.id,
-              userName: message.sender.userName,
-              displayName: message.sender.displayName,
-              image: message.sender.image,
-              status: message.sender.status,
-            }
-          : undefined,
+        sender: {
+          ...message.sender,
+          status: message.sender.status as UserStatus,
+        },
         attachments: message.attachments,
       };
 
@@ -527,7 +515,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -565,7 +553,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      }),
+      })
     )
     .subscription(({ input }) => {
       return observable<{ message: DirectMessage }>((emit) => {
@@ -618,13 +606,6 @@ export const conversationRouter = router({
               if (sender) {
                 messageWithSender = {
                   ...msg,
-                  sender: {
-                    id: sender.id,
-                    userName: sender.userName,
-                    displayName: sender.displayName,
-                    image: sender.image,
-                    status: sender.status,
-                  },
                 };
               }
             }
@@ -641,7 +622,7 @@ export const conversationRouter = router({
         return () => {
           eventEmitter.off("conversation:message:new", handler);
         };
-      },
+      }
     );
   }),
 });

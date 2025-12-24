@@ -15,17 +15,21 @@ import {
 } from "../ui/resizable";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { MessageInput } from "../message-input";
-import { User } from "@/types";
+import { Conversation, DirectMessage, User } from "@/types";
+import { useCurrentUser } from "@/providers/user-provider";
 
 interface DirectChatContainerProps {
+  data: Conversation;
   conversationId: string;
 }
 
 export default function DirectChatContainer({
+  data,
   conversationId,
 }: DirectChatContainerProps) {
   const [collapsed, setCollapsed] = useState(true);
   const memberPanelRef = useRef<ImperativePanelHandle>(null);
+  const { user } = useCurrentUser();
 
   const sendMessage = trpc.conversation.sendConversationMessage.useMutation();
 
@@ -33,20 +37,8 @@ export default function DirectChatContainer({
     sendMessage.mutate({ conversationId, content });
   };
 
-  // Get conversation details
-  const { data: conversation } = trpc.conversation.getConversationById.useQuery(
-    { conversationId },
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      refetchOnWindowFocus: false,
-    }
-  );
-
-  // Get other user from conversation
-  const { data: currentUser } = trpc.user.me.useQuery();
-  const otherUser = conversation?.participants.find(
-    (p) => p.userId !== currentUser?.id
-  )?.user as User;
+  const otherUser = data?.participants.find((p) => p.userId !== user?.id)
+    ?.user as User;
 
   const displayName = otherUser?.displayName || otherUser?.userName || "User";
 
@@ -130,6 +122,7 @@ export default function DirectChatContainer({
                 }
               >
                 <ChatArea
+                  initData={data.messages as DirectMessage[]}
                   conversationId={conversationId}
                   otherUser={otherUser}
                 />

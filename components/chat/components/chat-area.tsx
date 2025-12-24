@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc/react";
 import { useRef, useEffect } from "react";
 import { MessageItem } from "../../message-item";
 import { Message } from "@/types";
+import { useCurrentUser } from "@/providers/user-provider";
 
 interface ChatAreaProps {
   channelId: string;
@@ -13,6 +14,7 @@ interface ChatAreaProps {
 export function ChatArea({ channelId }: ChatAreaProps) {
   const utils = trpc.useUtils();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user: currentUser } = useCurrentUser();
 
   const { data } = trpc.message.getMessages.useQuery(
     {
@@ -47,7 +49,6 @@ export function ChatArea({ channelId }: ChatAreaProps) {
   };
 
   const messages = data?.messages || [];
-  const { data: currentUser } = trpc.user.me.useQuery();
 
   return (
     <div className="flex h-full flex-col">

@@ -4,6 +4,7 @@ import "./globals.css";
 import { TRPCProvider } from "@/providers/trpc-provider";
 import { UserStatusProvider } from "@/providers/user-status-provider";
 import { Toaster } from "@/components/sonner";
+import { UserProvider } from "@/providers/user-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
       >
         <TRPCProvider>
-          <UserStatusProvider>{children}</UserStatusProvider>
+          <UserProvider>
+            <UserStatusProvider>{children}</UserStatusProvider>
+          </UserProvider>
         </TRPCProvider>
         <Toaster position="bottom-right" />
       </body>

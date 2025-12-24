@@ -5,7 +5,7 @@ import { User, UserStatus } from "@/types";
 interface UserAvatarProps {
   user: User;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
-  sizeStatus?: "3.5" | "5" | "6";
+  sizeStatus?: "3.5" | "4" | "5" | "6";
   className?: string;
   fallbackClassName?: string;
   showStatus?: boolean;
@@ -41,6 +41,7 @@ const statusConfig = {
 
 const sizeStatusClasses = {
   "3.5": "size-3.5 -bottom-0.5 -right-0.5",
+  "4": "size-4 bottom-0 right-0",
   "5": "size-5 bottom-0 right-0",
   "6": "size-5.5 bottom-0.5 right-0.5",
 };

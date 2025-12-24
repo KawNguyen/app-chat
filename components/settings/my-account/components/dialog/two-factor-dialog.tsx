@@ -13,9 +13,11 @@ import { TwoFactorSetup } from "./two-factor-setup";
 
 export function TwoFactorDialog({
   isEnabled,
+  hasPassword,
   onStatusChange,
 }: {
   isEnabled: boolean;
+  hasPassword?: boolean;
   onStatusChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -40,6 +42,7 @@ export function TwoFactorDialog({
 
         <TwoFactorSetup
           isEnabled={isEnabled}
+          hasPassword={hasPassword}
           onStatusChange={() => {
             onStatusChange();
             setOpen(false);
