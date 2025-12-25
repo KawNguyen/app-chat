@@ -17,6 +17,7 @@ import { ImperativePanelHandle } from "react-resizable-panels";
 import { MessageInput } from "../message-input";
 import { Conversation, DirectMessage, User } from "@/types";
 import { useCurrentUser } from "@/providers/user-provider";
+import { useFriendActions } from "@/hooks/use-friend-actions";
 
 interface DirectChatContainerProps {
   data: Conversation;
@@ -41,6 +42,25 @@ export default function DirectChatContainer({
     ?.user as User;
 
   const displayName = otherUser?.displayName || otherUser?.userName || "User";
+
+  const { data: conversationData } =
+    trpc.conversation.getConversationById.useQuery(
+      { conversationId },
+      { enabled: !!conversationId },
+    );
+
+  const isFriend = conversationData?.isFriend ?? false;
+  const friendRequestStatus = conversationData?.friendRequestStatus;
+
+  const {
+    removeFriendMutation,
+    sendFriendRequestMutation,
+    handleRemoveFriend,
+    handleSendFriendRequest,
+  } = useFriendActions({
+    user: otherUser,
+    conversationId,
+  });
 
   return (
     <div className="flex h-screen w-full bg-background">
@@ -125,6 +145,12 @@ export default function DirectChatContainer({
                   initData={data.messages as DirectMessage[]}
                   conversationId={conversationId}
                   otherUser={otherUser}
+                  isFriend={isFriend}
+                  friendRequestStatus={friendRequestStatus?.status}
+                  onSendFriendRequest={handleSendFriendRequest}
+                  onRemoveFriend={handleRemoveFriend}
+                  sendFriendRequestMutation={sendFriendRequestMutation}
+                  removeFriendMutation={removeFriendMutation}
                 />
               </Suspense>
             </div>
@@ -153,7 +179,12 @@ export default function DirectChatContainer({
             {otherUser && (
               <DirectMessageProfile
                 user={otherUser}
-                conversationId={conversationId}
+                isFriend={isFriend}
+                friendRequestStatus={friendRequestStatus?.status}
+                onSendFriendRequest={handleSendFriendRequest}
+                onRemoveFriend={handleRemoveFriend}
+                sendFriendRequestMutation={sendFriendRequestMutation}
+                removeFriendMutation={removeFriendMutation}
               />
             )}
           </ResizablePanel>

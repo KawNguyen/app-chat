@@ -39,9 +39,7 @@ export function UserMenuItems({
         {/* Status Menu */}
         <div className="p-2">
           <UserStatusMenu
-            currentStatus={
-              user.status as UserStatus
-            }
+            currentStatus={user.status as UserStatus}
             onStatusChange={onStatusChange}
           />
         </div>

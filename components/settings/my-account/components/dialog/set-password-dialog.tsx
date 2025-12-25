@@ -85,7 +85,7 @@ export function SetPasswordDialog({
     } catch (error: unknown) {
       console.error("Password error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update password"
+        error instanceof Error ? error.message : "Failed to update password",
       );
     } finally {
       setIsLoading(false);
@@ -184,8 +184,8 @@ export function SetPasswordDialog({
               {isLoading
                 ? "Processing..."
                 : hasPassword
-                ? "Change Password"
-                : "Set Password"}
+                  ? "Change Password"
+                  : "Set Password"}
             </Button>
           </div>
         </div>

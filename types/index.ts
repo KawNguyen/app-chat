@@ -142,6 +142,12 @@ export interface Channel {
   updatedAt: Date;
   bitrate: number | null;
   userLimit: number | null;
+
+  permissions?: ChannelPermission[];
+  members: ChannelMember[];
+  messages: Message[];
+  category: Category;
+  server: Server;
 }
 
 // ==================== MEMBER & ROLE TYPES ====================

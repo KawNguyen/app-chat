@@ -26,7 +26,7 @@ export function NavUser({
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(
     user?.status && user?.status !== UserStatus.OFFLINE
       ? (user.status as UserStatus)
-      : UserStatus.ONLINE
+      : UserStatus.ONLINE,
   );
 
   const { isMuted, isDeafened, toggleMute, toggleDeafen } = useVoiceControls();

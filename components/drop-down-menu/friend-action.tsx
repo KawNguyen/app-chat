@@ -18,7 +18,6 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { trpc } from "@/lib/trpc/react";
-import { toast } from "sonner";
 
 interface FriendActionProps {
   isFriend: boolean;
@@ -29,74 +28,32 @@ interface FriendActionProps {
     image: string | null;
     status: string;
   };
-  conversationId?: string;
   friendRequestStatus?: string;
+  onSendFriendRequest: () => void;
+  onRemoveFriend: () => void;
+  sendFriendRequestMutation: ReturnType<
+    typeof trpc.friend.sendFriendRequest.useMutation
+  >;
+  removeFriendMutation: ReturnType<typeof trpc.friend.removeFriend.useMutation>;
 }
 
 const FriendAction = ({
   isFriend,
   user,
-  conversationId,
   friendRequestStatus,
+  onSendFriendRequest,
+  onRemoveFriend,
+  sendFriendRequestMutation,
+  removeFriendMutation,
 }: FriendActionProps) => {
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-  const utils = trpc.useUtils();
 
   const displayName = user.displayName || user.userName || "User";
-
-  // Mutations
-  const removeFriendMutation = trpc.friend.removeFriend.useMutation({
-    onSuccess: () => {
-      toast.success(`Removed ${displayName} from your friends`);
-      setShowRemoveDialog(false);
-
-      // Update friends list cache
-      const previousFriends = utils.friend.listFriends.getData();
-      if (previousFriends) {
-        const updatedFriends = previousFriends.filter((f) => f.id !== user.id);
-        utils.friend.listFriends.setData(undefined, updatedFriends);
-      }
-
-      // Update conversation cache if exists
-      if (conversationId) {
-        // Just invalidate this one since structure is complex
-        utils.conversation.getConversationById.invalidate({ conversationId });
-      }
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to remove friend");
-    },
-  });
-
-  const sendFriendRequestMutation = trpc.friend.sendFriendRequest.useMutation({
-    onSuccess: () => {
-      // Update conversation cache to reflect pending status
-      if (conversationId) {
-        // Invalidate conversation to get updated friendRequestStatus
-        utils.conversation.getConversationById.invalidate({ conversationId });
-      }
-      // No need to invalidate pending requests here - user sent the request
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send friend request");
-    },
-  });
-
-  // Handlers
-  const handleRemoveFriend = () => {
-    removeFriendMutation.mutate({ friendId: user.id });
-  };
-
-  const handleSendFriendRequest = () => {
-    if (user.userName) {
-      sendFriendRequestMutation.mutate({ userName: user.userName });
-    }
-  };
 
   if (!isFriend) {
     return (
       <Button
-        onClick={handleSendFriendRequest}
+        onClick={onSendFriendRequest}
         disabled={
           sendFriendRequestMutation.isPending ||
           friendRequestStatus === "PENDING"
@@ -153,7 +110,7 @@ const FriendAction = ({
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRemoveFriend}
+              onClick={onRemoveFriend}
               disabled={removeFriendMutation.isPending}
             >
               {removeFriendMutation.isPending ? "Removing..." : "Remove Friend"}

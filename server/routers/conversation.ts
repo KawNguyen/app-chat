@@ -15,7 +15,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -167,7 +167,7 @@ export const conversationRouter = router({
           lastReadAt,
           unreadCount,
         };
-      })
+      }),
     );
 
     return conversationsWithFriendStatus;
@@ -180,7 +180,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         otherUserId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Validate other user exists
@@ -277,7 +277,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const conversation = await prisma.conversation.findFirst({
@@ -315,7 +315,7 @@ export const conversationRouter = router({
 
       // Get the other user (for DM conversations)
       const otherParticipant = conversation.participants.find(
-        (p) => p.userId !== ctx.user.id
+        (p) => p.userId !== ctx.user.id,
       );
       const otherUserId = otherParticipant?.user?.id;
 
@@ -373,7 +373,7 @@ export const conversationRouter = router({
         conversationId: z.string(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -439,7 +439,7 @@ export const conversationRouter = router({
       z.object({
         conversationId: z.string(),
         content: z.string().min(1).max(2000),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -515,7 +515,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Verify user is part of conversation
@@ -553,7 +553,7 @@ export const conversationRouter = router({
     .input(
       z.object({
         conversationId: z.string(),
-      })
+      }),
     )
     .subscription(({ input }) => {
       return observable<{ message: DirectMessage }>((emit) => {
@@ -622,7 +622,7 @@ export const conversationRouter = router({
         return () => {
           eventEmitter.off("conversation:message:new", handler);
         };
-      }
+      },
     );
   }),
 });

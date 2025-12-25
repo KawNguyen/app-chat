@@ -7,34 +7,36 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Video, Users, ChevronRight, Volume2, Bell } from "lucide-react";
 import { useUserStatus } from "@/providers/user-status-provider";
-import { trpc } from "@/lib/trpc/react";
 import FriendAction from "@/components/drop-down-menu/friend-action";
 import { User } from "@/types";
+import { trpc } from "@/lib/trpc/react";
 
 interface DirectMessageProfileProps {
   user: User;
-  conversationId: string;
+  isFriend: boolean;
+  friendRequestStatus?: string;
+  onSendFriendRequest: () => void;
+  onRemoveFriend: () => void;
+  sendFriendRequestMutation: ReturnType<
+    typeof trpc.friend.sendFriendRequest.useMutation
+  >;
+  removeFriendMutation: ReturnType<typeof trpc.friend.removeFriend.useMutation>;
 }
 
 export function DirectMessageProfile({
   user,
-  conversationId,
+  isFriend,
+  friendRequestStatus,
+  onSendFriendRequest,
+  onRemoveFriend,
+  sendFriendRequestMutation,
+  removeFriendMutation,
 }: DirectMessageProfileProps) {
   const { getUserStatus } = useUserStatus();
   const currentStatus = getUserStatus(user.id) || user.status;
 
   const displayName = user.displayName || user.userName || "User";
   const memberSince = "Oct 3, 2021"; // Hardcoded for now
-
-  // Get conversation data with friend status
-  const { data: conversationData } =
-    trpc.conversation.getConversationById.useQuery(
-      { conversationId },
-      { enabled: !!conversationId }
-    );
-
-  const isFriend = conversationData?.isFriend ?? false;
-  const friendRequestStatus = conversationData?.friendRequestStatus;
 
   return (
     <>
@@ -63,8 +65,11 @@ export function DirectMessageProfile({
                 <FriendAction
                   isFriend={isFriend}
                   user={user}
-                  conversationId={conversationId}
-                  friendRequestStatus={friendRequestStatus?.status}
+                  friendRequestStatus={friendRequestStatus}
+                  onSendFriendRequest={onSendFriendRequest}
+                  onRemoveFriend={onRemoveFriend}
+                  sendFriendRequestMutation={sendFriendRequestMutation}
+                  removeFriendMutation={removeFriendMutation}
                 />
               </div>
             </div>

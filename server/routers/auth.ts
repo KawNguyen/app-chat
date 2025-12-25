@@ -32,7 +32,7 @@ export const authRouter = router({
     .input(
       z.object({
         password: z.string().min(8, "Password must be at least 8 characters"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if user already has a password

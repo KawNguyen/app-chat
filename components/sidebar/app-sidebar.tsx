@@ -20,7 +20,7 @@ function SidebarContent() {
     undefined,
     {
       staleTime: 2 * 60 * 1000, // 2 minutes
-    }
+    },
   ) as {
     data: Server[];
   };
@@ -31,7 +31,7 @@ function SidebarContent() {
 
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<string | null>(
-    null
+    null,
   );
 
   const handleServerSelect = (serverId: string | null) => {

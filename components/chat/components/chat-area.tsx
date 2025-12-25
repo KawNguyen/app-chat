@@ -8,37 +8,42 @@ import { Message } from "@/types";
 import { useCurrentUser } from "@/providers/user-provider";
 
 interface ChatAreaProps {
-  channelId: string;
+  // channelId: string;
+  initData?: Message[];
 }
 
-export function ChatArea({ channelId }: ChatAreaProps) {
+export function ChatArea({ initData }: ChatAreaProps) {
   const utils = trpc.useUtils();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user: currentUser } = useCurrentUser();
 
-  const { data } = trpc.message.getMessages.useQuery(
-    {
-      channelId,
-      limit: 50,
-    },
-    {
-      staleTime: 30 * 1000, // 30 seconds
-      refetchOnWindowFocus: false,
-    }
-  );
+  // const { data } = trpc.message.getMessages.useQuery(
+  //   {
+  //     channelId,
+  //     limit: 50,
+  //   },
+  //   {
+  //     staleTime: 30 * 1000, // 30 seconds
+  //     refetchOnWindowFocus: false,
+  //   }
+  // );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data]);
+  }, [initData]);
 
   // Subscribe to new messages
   trpc.message.onNewMessage.useSubscription(
-    { channelId },
+    { channelId: initData && initData.length > 0 ? initData[0].channelId : "" },
     {
       onData: () => {
-        utils.message.getMessages.invalidate({ channelId, limit: 50 });
+        utils.message.getMessages.invalidate({
+          channelId:
+            initData && initData.length > 0 ? initData[0].channelId : "",
+          limit: 50,
+        });
       },
-    }
+    },
   );
 
   const formatTimestamp = (date: Date) => {
@@ -48,7 +53,7 @@ export function ChatArea({ channelId }: ChatAreaProps) {
     }).format(new Date(date));
   };
 
-  const messages = data?.messages || [];
+  const messages = initData || [];
 
   return (
     <div className="flex h-full flex-col">

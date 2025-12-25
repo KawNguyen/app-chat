@@ -66,7 +66,7 @@ export function UserAvatar({
           className={cn(
             "rounded-full bg-blue-700 text-white font-semibold",
             fallbackSizeClasses[size],
-            fallbackClassName
+            fallbackClassName,
           )}
         >
           {initials}
@@ -79,7 +79,7 @@ export function UserAvatar({
           <div
             className={cn(
               "w-full h-full rounded-full",
-              statusConfig[userStatus]
+              statusConfig[userStatus],
             )}
           />
         </div>

@@ -70,7 +70,7 @@ export function FriendsListClient() {
       const previousRequests = utils.friend.listPendingRequests.getData();
       if (previousRequests) {
         const updatedRequests = previousRequests.filter(
-          (r) => r.id !== variables.requestId
+          (r) => r.id !== variables.requestId,
         );
         utils.friend.listPendingRequests.setData(undefined, updatedRequests);
       } else {
@@ -95,7 +95,7 @@ export function FriendsListClient() {
       const previousRequests = utils.friend.listPendingRequests.getData();
       if (previousRequests) {
         const updatedRequests = previousRequests.filter(
-          (r) => r.id !== variables.requestId
+          (r) => r.id !== variables.requestId,
         );
         utils.friend.listPendingRequests.setData(undefined, updatedRequests);
       } else {
@@ -135,7 +135,11 @@ export function FriendsListClient() {
         pendingRequestsCount={pendingRequests.length}
       />
 
-      <SearchBar className="px-4 pt-4" value={searchQuery} onChange={setSearchQuery} />
+      <SearchBar
+        className="px-4 pt-4"
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
 
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">

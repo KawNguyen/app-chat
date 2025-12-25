@@ -1,51 +1,61 @@
 "use client";
 
 import { ScrollArea } from "../../ui/scroll-area";
-import { trpc } from "@/lib/trpc/react";
-import { UserAvatar } from "@/components/user-avatar";
 import { useEffect, useRef, useState } from "react";
 import { MessageItem } from "../../message-item";
-import { UserProfilePopover } from "../../user-profile-popover";
 import { DirectMessage, User } from "@/types";
 import { useCurrentUser } from "@/providers/user-provider";
+import { HeaderCardChatArea } from "./header-card-chat-area";
+import { trpc } from "@/lib/trpc/react";
 
 interface ChatAreaProps {
   initData: DirectMessage[];
   conversationId: string;
   otherUser: User;
+  isFriend: boolean;
+  friendRequestStatus?: string;
+  onSendFriendRequest: () => void;
+  onRemoveFriend: () => void;
+  sendFriendRequestMutation: ReturnType<
+    typeof trpc.friend.sendFriendRequest.useMutation
+  >;
+  removeFriendMutation: ReturnType<typeof trpc.friend.removeFriend.useMutation>;
 }
 
 export function ChatArea({
   initData,
   conversationId,
   otherUser,
+  isFriend,
+  friendRequestStatus,
+  onSendFriendRequest,
+  onRemoveFriend,
+  sendFriendRequestMutation,
+  removeFriendMutation,
 }: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
   const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(
-    null
+    null,
   );
   const { user: currentUser } = useCurrentUser();
 
-  // Mark as read mutation
   const markAsRead = trpc.conversation.markAsRead.useMutation({
     onSuccess: () => {
-      // Invalidate conversations list để update unread count và lastReadAt
       utils.conversation.listConversations.invalidate();
 
-      // Update lastReadAt trong cache local để UI update ngay
       const conversations = utils.conversation.listConversations.getData();
       if (conversations) {
         const updatedConversations = conversations.map((c) =>
           c.id === conversationId
             ? { ...c, lastReadAt: new Date(), unreadCount: 0 }
-            : c
+            : c,
         );
         utils.conversation.listConversations.setData(
           undefined,
-          updatedConversations
+          updatedConversations,
         );
       }
 
@@ -76,19 +86,18 @@ export function ChatArea({
         ],
         pageParams: [undefined],
       },
-    }
+    },
   );
 
-  // Merge và sắp xếp messages theo thứ tự từ cũ đến mới
   const messages = Array.from(
     new Map(
       (newMessage?.pages.flatMap((p) => p.messages) ?? initData).map((msg) => [
         msg.id,
         msg,
-      ])
-    ).values()
+      ]),
+    ).values(),
   ).sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
   // Mark as read khi vào conversation lần đầu
@@ -143,7 +152,7 @@ export function ChatArea({
       {
         threshold: 0.1,
         rootMargin: "100px",
-      }
+      },
     );
 
     observer.observe(topRef.current);
@@ -160,7 +169,7 @@ export function ChatArea({
         const lastReadMsg = [...messages]
           .reverse() // Đảo ngược để tìm từ mới nhất
           .find(
-            (m) => new Date(m.createdAt) <= new Date(currentConv.lastReadAt!)
+            (m) => new Date(m.createdAt) <= new Date(currentConv.lastReadAt!),
           );
 
         if (lastReadMsg) {
@@ -178,10 +187,26 @@ export function ChatArea({
     }).format(new Date(date));
   };
 
+  const formatDateLabel = (date: Date) => {
+    const messageDate = new Date(date);
+    return messageDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <div className="flex flex-col h-full">
       <ScrollArea viewportRef={scrollRef} className="flex-1 h-full">
         <div ref={topRef} className="h-4" />
+        {!hasNextPage && (
+          <HeaderCardChatArea
+            user={otherUser}
+            isFriend={isFriend}
+            friendRequestStatus={friendRequestStatus}
+          />
+        )}
 
         {/* Loading indicator */}
         {isFetchingNextPage && (
@@ -193,37 +218,17 @@ export function ChatArea({
         {/* Welcome Message */}
         {messages.length === 0 && otherUser && (
           <div className="flex flex-col items-center justify-center h-full px-4 text-center py-20">
-            <UserProfilePopover
+            <HeaderCardChatArea
               user={otherUser}
-              displayName={
-                otherUser.displayName || otherUser.userName || "User"
+              isFriend={isFriend}
+              friendRequestStatus={friendRequestStatus}
+              onAddFriend={onSendFriendRequest}
+              onRemoveFriend={onRemoveFriend}
+              isPending={
+                sendFriendRequestMutation.isPending ||
+                removeFriendMutation.isPending
               }
-              side="right"
-              align="center"
-            >
-              <div className="relative cursor-pointer">
-                <UserAvatar user={otherUser} size="lg" showStatus={false} />
-              </div>
-            </UserProfilePopover>
-            <UserProfilePopover
-              user={otherUser}
-              displayName={
-                otherUser.displayName || otherUser.userName || "User"
-              }
-              side="right"
-              align="center"
-            >
-              <h2 className="mt-6 text-2xl font-bold hover:underline cursor-pointer">
-                {otherUser.displayName || otherUser.userName}
-              </h2>
-            </UserProfilePopover>
-            <p className="mt-2 text-sm text-muted-foreground max-w-md">
-              This is the beginning of your direct message history with{" "}
-              <span className="font-semibold">
-                @{otherUser.userName || otherUser.displayName}
-              </span>
-              .
-            </p>
+            />
             <p className="mt-1 text-xs text-muted-foreground">
               No group in common
             </p>
@@ -234,7 +239,12 @@ export function ChatArea({
         <div className="flex flex-col px-4 pb-4 pt-4">
           {messages.map((msg, idx: number) => {
             const showAvatar =
-              idx === 0 || messages[idx - 1].senderId !== msg.senderId;
+              idx === 0 ||
+              messages[idx - 1].senderId !== msg.senderId ||
+              (messages[idx - 1].senderId === msg.senderId &&
+                new Date(msg.createdAt).getTime() -
+                  new Date(messages[idx - 1].createdAt).getTime() >=
+                  10 * 60 * 1000);
 
             const isFirstUnread =
               lastReadMessageId &&
@@ -242,8 +252,25 @@ export function ChatArea({
               messages[idx - 1].id === lastReadMessageId &&
               msg.senderId !== currentUser?.id;
 
+            const currentDate = formatDateLabel(new Date(msg.createdAt));
+            const prevDate =
+              idx > 0
+                ? formatDateLabel(new Date(messages[idx - 1].createdAt))
+                : null;
+            const showDateSeparator = currentDate !== prevDate;
+
             return (
               <div key={msg.id} className="relative">
+                {showDateSeparator && (
+                  <div className="flex items-center my-4 -mx-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="px-3 text-xs font-medium text-muted-foreground bg-background">
+                      {currentDate}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+
                 {isFirstUnread && (
                   <div className="flex items-center my-2 -mx-4">
                     <div className="flex-1 h-px bg-red-500" />

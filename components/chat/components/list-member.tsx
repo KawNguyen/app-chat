@@ -22,7 +22,7 @@ function MemberItem({ member }: { member: ServerMember }) {
   const { getUserStatus } = useUserStatus();
   const displayName = member.nickname || member.user.name;
   const highestRole = [...member.roles].sort(
-    (a, b) => b.position - a.position
+    (a, b) => b.position - a.position,
   )[0];
 
   // Get status from global provider, fallback to member data
@@ -32,7 +32,7 @@ function MemberItem({ member }: { member: ServerMember }) {
     <div
       className={cn(
         "group flex items-center gap-2 px-2 py-1.5 mx-2 rounded cursor-pointer",
-        "hover:bg-accent/30 transition-colors"
+        "hover:bg-accent/30 transition-colors",
       )}
     >
       <UserAvatar
@@ -49,7 +49,7 @@ function MemberItem({ member }: { member: ServerMember }) {
               "text-sm font-medium truncate",
               userStatus === "OFFLINE"
                 ? "text-muted-foreground"
-                : "text-foreground"
+                : "text-foreground",
             )}
             style={highestRole?.color ? { color: highestRole.color } : {}}
           >
@@ -89,7 +89,7 @@ export function ListMember({ serverId }: ListMemberProps) {
     {
       enabled: !!serverId,
       staleTime: Infinity,
-    }
+    },
   ) as {
     data: ServerMember[] | undefined;
     isLoading: boolean;
@@ -112,7 +112,7 @@ export function ListMember({ serverId }: ListMemberProps) {
       onData: async () => {
         await utils.member.getServerMembers.invalidate({ serverId });
       },
-    }
+    },
   );
   // Helper: Check if member is active (online, idle, dnd)
   const isActive = (status: UserStatus) =>
@@ -136,7 +136,7 @@ export function ListMember({ serverId }: ListMemberProps) {
   const membersByRole = members.reduce(
     (acc, member) => {
       const highestRole = [...member.roles].sort(
-        (a, b) => b.position - a.position
+        (a, b) => b.position - a.position,
       )[0];
       const roleKey = highestRole ? highestRole.name : "Online";
 
@@ -175,12 +175,12 @@ export function ListMember({ serverId }: ListMemberProps) {
         active: ServerMember[];
         offline: ServerMember[];
       }
-    >
+    >,
   );
 
   // Sort roles by position (highest first)
   const sortedRoles = Object.values(membersByRole).sort(
-    (a, b) => b.role.position - a.role.position
+    (a, b) => b.role.position - a.role.position,
   );
 
   return (

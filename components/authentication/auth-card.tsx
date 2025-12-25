@@ -76,7 +76,9 @@ const AuthCard = () => {
       <CardFooter className="w-full flex flex-col items-center gap-4">
         <div className="w-full flex items-center justify-center">
           <Separator className="bg-muted-foreground h-px w-full" />
-          <div className="w-full text-muted-foreground text-center">Or continue with</div>
+          <div className="w-full text-muted-foreground text-center">
+            Or continue with
+          </div>
           <Separator className="bg-muted-foreground h-px w-full" />
         </div>
 

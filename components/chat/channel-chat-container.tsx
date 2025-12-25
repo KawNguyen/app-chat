@@ -14,16 +14,19 @@ import { ChatArea } from "./components/chat-area";
 import { ListMember } from "./components/list-member";
 import { trpc } from "@/lib/trpc/react";
 import { MessageInput } from "../message-input";
+import { Channel } from "@/types";
 
 interface ChatContainerProps {
-  channelId: string;
-  channelName?: string;
+  // channelId: string;
+  // channelName: string;
+  initData?: Channel;
   serverId: string;
 }
 
 export default function ChatContainer({
-  channelId,
-  channelName = "general",
+  // channelId,
+  // channelName,
+  initData,
   serverId,
 }: ChatContainerProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -31,19 +34,22 @@ export default function ChatContainer({
 
   const sendMessage = trpc.message.sendMessage.useMutation({
     onSuccess: () => {
-      trpc.useUtils().message.getMessages.invalidate({ channelId, limit: 50 });
+      trpc.useUtils().message.getMessages.invalidate({
+        channelId: initData?.id ?? "",
+        limit: 50,
+      });
     },
   });
 
   const handleSendMessage = (content: string) => {
-    sendMessage.mutate({ channelId, content });
+    sendMessage.mutate({ channelId: initData?.id ?? "", content });
   };
 
   return (
     <div className="flex flex-col h-screen w-full bg-background">
       {/* Header */}
       <header className="flex shrink-0 items-center justify-between border-b p-2.5 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <h1 className="text-lg font-medium">#{channelName}</h1>
+        <h1 className="text-lg font-medium">#{initData?.name}</h1>
         <Button
           variant="ghost"
           size="icon"
@@ -86,12 +92,12 @@ export default function ChatContainer({
                 </div>
               }
             >
-              <ChatArea channelId={channelId} />
+              <ChatArea initData={initData?.messages ?? []} />
             </Suspense>
           </div>
           <div className="shrink-0 px-3 pb-3">
             <MessageInput
-              channelName={channelName}
+              channelName={initData?.name ?? ""}
               onSendMessage={handleSendMessage}
             />
           </div>

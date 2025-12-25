@@ -28,5 +28,4 @@ export function Header({ activeSection }: { activeSection: string }) {
       </DialogClose>
     </header>
   );
-};
-
+}

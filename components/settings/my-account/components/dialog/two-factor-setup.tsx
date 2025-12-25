@@ -61,7 +61,7 @@ export function TwoFactorSetup({
       }
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to enable 2FA"
+        error instanceof Error ? error.message : "Failed to enable 2FA",
       );
     } finally {
       setIsLoading(false);
@@ -84,7 +84,7 @@ export function TwoFactorSetup({
       onStatusChange();
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error ? error.message : "Invalid verification code"
+        error instanceof Error ? error.message : "Invalid verification code",
       );
     } finally {
       setIsLoading(false);
@@ -107,7 +107,7 @@ export function TwoFactorSetup({
       onStatusChange();
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to disable 2FA"
+        error instanceof Error ? error.message : "Failed to disable 2FA",
       );
     } finally {
       setIsLoading(false);

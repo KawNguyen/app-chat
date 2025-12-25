@@ -11,7 +11,7 @@ import { useUserStatus } from "@/providers/user-status-provider";
 import { User, UserStatus } from "@/types";
 
 const DirectMessagesList = lazy(
-  () => import("@/components/direct-chat/direct-messages-list")
+  () => import("@/components/direct-chat/direct-messages-list"),
 );
 
 export interface Conversation {
@@ -67,7 +67,7 @@ function FriendList({
     (friend) => ({
       ...friend,
       status: getUserStatus(friend.id) || friend.status,
-    })
+    }),
   );
 
   return (
