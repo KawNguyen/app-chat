@@ -14,6 +14,8 @@ interface MessageItemProps {
   showAvatar: boolean;
   formatTimestamp: (date: Date) => string;
   onProfileClick?: (user: User) => void;
+  conversationId?: string;
+  showFriendActions?: boolean;
 }
 
 export function MessageItem({
@@ -22,6 +24,8 @@ export function MessageItem({
   showAvatar,
   formatTimestamp,
   onProfileClick,
+  conversationId,
+  showFriendActions = false,
 }: MessageItemProps) {
   // Determine user info from either sender or member structure
   const user =
@@ -47,6 +51,9 @@ export function MessageItem({
                   user={user!}
                   displayName={displayName}
                   side="right"
+                  conversationId={conversationId}
+                  showFriendActions={showFriendActions}
+                  currentUserId={currentUserId}
                 >
                   <div className="cursor-pointer w-10 flex items-center justify-center">
                     <UserAvatar user={user!} size="md" />
@@ -66,6 +73,9 @@ export function MessageItem({
                       user={user!}
                       displayName={displayName}
                       side="right"
+                      conversationId={conversationId}
+                      showFriendActions={showFriendActions}
+                      currentUserId={currentUserId}
                     >
                       <p className="font-semibold text-[15px] text-foreground hover:underline cursor-pointer">
                         {displayName}

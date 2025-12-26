@@ -10,7 +10,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ReactNode } from "react";
-import { User } from "@/types";
+import { User, FriendRequestStatus } from "@/types";
+import { useFriendActions } from "@/hooks/use-friend-actions";
+import FriendAction from "./drop-down-menu/friend-action";
 
 interface UserProfilePopoverProps {
   user: User;
@@ -18,6 +20,11 @@ interface UserProfilePopoverProps {
   children: ReactNode;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
+  conversationId?: string;
+  isFriend?: boolean;
+  friendRequestStatus?: FriendRequestStatus;
+  showFriendActions?: boolean;
+  currentUserId?: string;
 }
 
 export function UserProfilePopover({
@@ -26,7 +33,25 @@ export function UserProfilePopover({
   children,
   side = "top",
   align = "start",
+  conversationId,
+  isFriend = false,
+  friendRequestStatus,
+  showFriendActions = true,
+  currentUserId,
 }: UserProfilePopoverProps) {
+  const isOwnProfile = currentUserId && user.id === currentUserId;
+
+  const {
+    handleRemoveFriend,
+    handleSendFriendRequest,
+    removeFriendMutation,
+    sendFriendRequestMutation,
+  } = useFriendActions({
+    user: user,
+    conversationId,
+  });
+
+
   return (
     <Popover>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -39,7 +64,30 @@ export function UserProfilePopover({
           {/* Profile Header with Banner */}
           <div className="relative">
             {/* Banner */}
-            <div className="h-[60px] bg-linear-to-br from-blue-500 via-purple-500 to-pink-500" />
+            <div className="relative h-20 bg-green-300">
+              {
+                showFriendActions && !isOwnProfile && (
+                  <div className="absolute top-2 right-2">
+                    <FriendAction
+                      user={{
+                        id: user.id,
+                        userName: user.userName,
+                        displayName: user.displayName,
+                        image: user.image,
+                        status: user.status,
+                      }}
+                      isFriend={isFriend}
+                      friendRequestStatus={friendRequestStatus}
+                      onSendFriendRequest={handleSendFriendRequest}
+                      onRemoveFriend={handleRemoveFriend}
+                      sendFriendRequestMutation={sendFriendRequestMutation}
+                      removeFriendMutation={removeFriendMutation}
+                    />
+                  </div>
+                )
+              }
+
+            </div>
 
             {/* Avatar */}
             <div className="absolute -bottom-8 left-3">
@@ -53,26 +101,35 @@ export function UserProfilePopover({
               <div className="bg-card rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="text-lg font-bold">{displayName}</h2>
-                  <Badge variant="secondary" className="text-xs">
-                    Friend
-                  </Badge>
+                  {!isOwnProfile && isFriend && (
+                    <Badge variant="secondary" className="text-xs">
+                      Friend
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {user?.userName ? `@${user.userName}` : "No username"}
                 </p>
+
                 <Separator className="my-2" />
                 <div className="space-y-2">
                   <div>
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
                       About Me
                     </p>
-                    <p className="text-xs">Ngủ sớm dậy sớm :)))</p>
+                    <p className="text-xs">{user.bio || "No bio available"}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
                       Member Since
                     </p>
-                    <p className="text-xs">Oct 3, 2021</p>
+                    <p className="text-xs">
+                      {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>

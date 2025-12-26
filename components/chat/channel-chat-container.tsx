@@ -44,7 +44,7 @@ export default function ChatContainer({
   const handleSendMessage = (content: string) => {
     sendMessage.mutate({ channelId: initData?.id ?? "", content });
   };
-
+  
   return (
     <div className="flex flex-col h-screen w-full bg-background">
       {/* Header */}

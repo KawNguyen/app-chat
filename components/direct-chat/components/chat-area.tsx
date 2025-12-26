@@ -59,7 +59,6 @@ export function ChatArea({
         );
       }
 
-      // Reset lastReadMessageId vì đã đọc hết
       setLastReadMessageId(null);
     },
   });
@@ -80,7 +79,6 @@ export function ChatArea({
         pages: [
           {
             messages: initData,
-            // Nếu có ít nhất 30 messages, có thể có thêm message cũ hơn
             nextCursor: initData.length >= 30 ? initData[0].id : undefined,
           },
         ],
@@ -286,6 +284,8 @@ export function ChatArea({
                   currentUserId={currentUser?.id}
                   showAvatar={showAvatar}
                   formatTimestamp={formatTimestamp}
+                  conversationId={conversationId}
+                  showFriendActions={true}
                 />
               </div>
             );

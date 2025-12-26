@@ -442,6 +442,8 @@ model FriendRequest {
     receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 
     @@unique([senderId, receiverId])
+    @@index([senderId, receiverId])
+    @@index([receiverId, senderId])
     @@map("friend_requests")
 }
 
@@ -461,6 +463,8 @@ model Friend {
     friend User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
 
     @@unique([userId, friendId])
+    @@index([userId, friendId])
+    @@index([friendId, userId])
     @@map("friends")
 }
 

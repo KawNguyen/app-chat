@@ -20,12 +20,12 @@ import { useCurrentUser } from "@/providers/user-provider";
 import { useFriendActions } from "@/hooks/use-friend-actions";
 
 interface DirectChatContainerProps {
-  data: Conversation;
+  initData: Conversation;
   conversationId: string;
 }
 
 export default function DirectChatContainer({
-  data,
+  initData,
   conversationId,
 }: DirectChatContainerProps) {
   const [collapsed, setCollapsed] = useState(true);
@@ -38,7 +38,7 @@ export default function DirectChatContainer({
     sendMessage.mutate({ conversationId, content });
   };
 
-  const otherUser = data?.participants.find((p) => p.userId !== user?.id)
+  const otherUser = initData?.participants.find((p) => p.userId !== user?.id)
     ?.user as User;
 
   const displayName = otherUser?.displayName || otherUser?.userName || "User";
@@ -46,7 +46,7 @@ export default function DirectChatContainer({
   const { data: conversationData } =
     trpc.conversation.getConversationById.useQuery(
       { conversationId },
-      { enabled: !!conversationId },
+      { enabled: !!conversationId }
     );
 
   const isFriend = conversationData?.isFriend ?? false;
@@ -142,7 +142,7 @@ export default function DirectChatContainer({
                 }
               >
                 <ChatArea
-                  initData={data.messages as DirectMessage[]}
+                  initData={initData.messages as DirectMessage[]}
                   conversationId={conversationId}
                   otherUser={otherUser}
                   isFriend={isFriend}

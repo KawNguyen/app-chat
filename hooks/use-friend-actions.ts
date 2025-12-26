@@ -1,16 +1,11 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/react";
+import { User } from "@/types";
 import { toast } from "sonner";
 
-interface UseFriendActionsProps {
-  user: {
-    id: string;
-    userName: string | null;
-    displayName: string | null;
-    image: string | null;
-    status: string;
-  };
+export interface UseFriendActionsOptions {
+  user: User;
   conversationId?: string;
   onRemoveSuccess?: () => void;
 }
@@ -19,7 +14,7 @@ export const useFriendActions = ({
   user,
   conversationId,
   onRemoveSuccess,
-}: UseFriendActionsProps) => {
+}: UseFriendActionsOptions) => {
   const utils = trpc.useUtils();
 
   const displayName = user.displayName || user.userName || "User";

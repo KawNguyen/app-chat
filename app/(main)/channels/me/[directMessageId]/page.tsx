@@ -33,7 +33,7 @@ const Page = async ({
 
   return (
     <DirectChatContainer
-      data={{
+      initData={{
         ...(conversation as unknown as Conversation),
         messages: messages as unknown as Conversation["messages"],
       }}

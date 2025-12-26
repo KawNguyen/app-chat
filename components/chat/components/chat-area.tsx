@@ -17,17 +17,6 @@ export function ChatArea({ initData }: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user: currentUser } = useCurrentUser();
 
-  // const { data } = trpc.message.getMessages.useQuery(
-  //   {
-  //     channelId,
-  //     limit: 50,
-  //   },
-  //   {
-  //     staleTime: 30 * 1000, // 30 seconds
-  //     refetchOnWindowFocus: false,
-  //   }
-  // );
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [initData]);
@@ -77,6 +66,7 @@ export function ChatArea({ initData }: ChatAreaProps) {
                 currentUserId={currentUser?.id}
                 showAvatar={showAvatar}
                 formatTimestamp={formatTimestamp}
+                showFriendActions={true}
               />
             );
           })}
